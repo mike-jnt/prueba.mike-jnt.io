@@ -325,7 +325,13 @@ historial.push({
 
 
 
-   async function generarPDF() {
+async function generarPDF(id) {
+    const emp = empleados.find(e => e.id === id);
+    if (!emp) {
+      alert("Empleado no encontrado");
+      return;
+    }
+
     const image = new Image();
     image.src = "./logo.png";
 
@@ -333,101 +339,112 @@ historial.push({
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      // Dibujar círculo blanco para simular logo redondo
+      // 🎯 LOGO REDONDO
       doc.setFillColor(255, 255, 255);
-      doc.circle(35, 35, 20, 'F'); // (x, y, radio, tipo F=fill)
+      doc.circle(25, 25, 15, 'F'); // círculo blanco
+      doc.addImage(image, 'PNG', 10, 10, 30, 30); // logo encima
 
-      // Logo encima del círculo
-      doc.addImage(image, 'PNG', 15, 15, 40, 40); // (x, y, ancho, alto)
-// Datos base para ejemplo
-const nombre = "jose natanael";
-const cargo = "cocinero";
-const estadoPago = "Pendiente";
+      // 📌 TÍTULOS A LA DERECHA DEL LOGO
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(25, 40, 90);
+      doc.text("SEÑOR AREPA", 50, 18);
 
-const diasTrabajados = 15;
-const valorDia = 50000;
-const diasFaltados = 15 - diasTrabajados;
-const totalBase = diasTrabajados * valorDia;
+      doc.setFontSize(12);
+      doc.setFont("Helvetica", "normal");
+      doc.text("Pago quincenal", 50, 27);
 
-const horasExtras = 2;
-const valorHoraExtra = 6250;
-const totalExtras = horasExtras * valorHoraExtra;
-const bonificacion = 50000;
+      // 📆 Fecha
+      const fecha = new Date().toLocaleDateString("es-CO", {
+        year: "numeric", month: "long", day: "numeric"
+      });
 
-const quincenaCompleta = valorDia * 15;
-const descuentoFaltas = quincenaCompleta - totalBase;
-const prestamo = 50000;
-const totalPagar = totalBase + totalExtras + bonificacion - prestamo;
+      doc.setFontSize(10);
+      doc.setTextColor(80);
+      doc.text(`Fecha de emisión: ${fecha}`, 200, 35, { align: "right" });
 
-// 1. Información del empleado
-doc.autoTable({
-  startY: 60,
-  head: [['Empleado', 'Cargo', 'Estado de Pago']],
-  body: [[nombre, cargo, estadoPago]],
-  styles: { halign: 'center', fontSize: 10 },
-  headStyles: { fillColor: [25, 40, 90], textColor: 255 },
-});
+      // 📊 CÁLCULOS
+      const diasFaltados = 15 - emp.diasTrabajados;
+      const totalTrabajado = emp.valorDia * emp.diasTrabajados;
+      const totalQuincena = emp.valorDia * 15;
+      const diferencia = totalQuincena - totalTrabajado;
+      const extras = (emp.horasExtras || 0) * (emp.valorHoraExtra || 0);
+      const bonificacion = emp.bonificacion || 0;
+      const totalFinal = totalTrabajado + extras + bonificacion;
+      const prestamo = emp.prestamo || 0;
+      const totalPagarConDescuento = totalFinal - prestamo;
 
-// 2. Base de días trabajados
-doc.autoTable({
-  startY: doc.lastAutoTable.finalY + 5,
-  head: [['Días Trabajados', 'Días Faltados', 'Valor Día', 'Total Base']],
-  body: [[
-    diasTrabajados,
-    diasFaltados,
-    `$ ${valorDia.toLocaleString('es-CO')}`,
-    `$ ${totalBase.toLocaleString('es-CO')}`
-  ]],
-  styles: { halign: 'center', fontSize: 10 },
-  headStyles: { fillColor: [60, 90, 160], textColor: 255 },
-});
+      const f = n => `$ ${n.toLocaleString('es-CO')}`; // formateador COP
 
-// 3. Horas extras y bonificación
-doc.autoTable({
-  startY: doc.lastAutoTable.finalY + 5,
-  head: [['Horas Extras', 'Valor Hora Extra', 'Total Extras', 'Bonificación']],
-  body: [[
-    horasExtras,
-    `$ ${valorHoraExtra.toLocaleString('es-CO')}`,
-    `$ ${totalExtras.toLocaleString('es-CO')}`,
-    `$ ${bonificacion.toLocaleString('es-CO')}`
-  ]],
-  styles: { halign: 'center', fontSize: 10 },
-  headStyles: { fillColor: [90, 120, 180], textColor: 255 },
-});
+      // 👤 Info empleado
+      doc.autoTable({
+        startY: 40,
+        head: [['Empleado', 'Cargo', 'Estado de Pago']],
+        body: [[emp.nombre, emp.cargo, emp.estadoPago]],
+        styles: { halign: 'center', fontSize: 10 },
+        headStyles: { fillColor: [25, 40, 90], textColor: 255 },
+      });
 
-// 4. Totales finales
-doc.autoTable({
-  startY: doc.lastAutoTable.finalY + 8,
-  head: [['Quincena Completa', 'Descuento por Faltas', 'Extras y Bonos', 'Préstamo', 'TOTAL A PAGAR']],
-  body: [[
-    `$ ${quincenaCompleta.toLocaleString('es-CO')}`,
-    `-$ ${descuentoFaltas.toLocaleString('es-CO')}`,
-    `+$ ${(totalExtras + bonificacion).toLocaleString('es-CO')}`,
-    `-$ ${prestamo.toLocaleString('es-CO')}`,
-    `$ ${totalPagar.toLocaleString('es-CO')}`
-  ]],
-  styles: { halign: 'center', fontSize: 11 },
-  headStyles: { fillColor: [0, 150, 50], textColor: 255, fontStyle: 'bold' },
-  bodyStyles: { textColor: [0, 0, 0] },
-});
+      // 📅 Asistencia
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 5,
+        head: [['Días Trabajados', 'Días Faltados', 'Valor Día', 'Total Base']],
+        body: [[
+          emp.diasTrabajados,
+          diasFaltados,
+          f(emp.valorDia),
+          f(totalTrabajado)
+        ]],
+        styles: { halign: 'center', fontSize: 10 },
+        headStyles: { fillColor: [60, 90, 160], textColor: 255 },
+      });
 
-// 5. Firmas
-const espacioFirmasY = doc.lastAutoTable.finalY + 30;
-doc.setFontSize(11);
-doc.setTextColor(0, 0, 0);
-doc.text("Firma Recursos Humanos:", 20, espacioFirmasY);
-doc.line(20, espacioFirmasY + 5, 90, espacioFirmasY + 5);
+      // ⏱️ Extras y Bonos
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 5,
+        head: [['Horas Extras', 'Valor Hora Extra', 'Total Extras', 'Bonificación']],
+        body: [[
+          emp.horasExtras || 0,
+          f(emp.valorHoraExtra || 0),
+          f(extras),
+          f(bonificacion)
+        ]],
+        styles: { halign: 'center', fontSize: 10 },
+        headStyles: { fillColor: [90, 120, 180], textColor: 255 },
+      });
 
-doc.text("Firma Recibe:", 120, espacioFirmasY);
-doc.line(120, espacioFirmasY + 5, 190, espacioFirmasY + 5);
+      // 💰 Totales
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 8,
+        head: [['Quincena Completa', 'Descuento por Faltas', 'Extras y Bonos', 'Préstamo', 'TOTAL A PAGAR']],
+        body: [[
+          f(totalQuincena),
+          `-${f(diferencia)}`,
+          `+${f(extras + bonificacion)}`,
+          `-${f(prestamo)}`,
+          f(totalPagarConDescuento)
+        ]],
+        styles: { halign: 'center', fontSize: 11 },
+        headStyles: { fillColor: [0, 150, 50], textColor: 255, fontStyle: 'bold' },
+        bodyStyles: { textColor: [0, 0, 0] },
+      });
 
-      // Guardar
-      doc.save("recibo_pago.pdf");
+      // ✍️ Firmas
+      const firmasY = doc.lastAutoTable.finalY + 30;
+      doc.setFontSize(11);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Firma Recursos Humanos:", 20, firmasY);
+      doc.line(20, firmasY + 5, 90, firmasY + 5);
+
+      doc.text("Firma Recibe:", 120, firmasY);
+      doc.line(120, firmasY + 5, 190, firmasY + 5);
+
+      // Guardar PDF
+      doc.save(`Recibo_${emp.nombre.replace(/\s+/g, "_")}.pdf`);
     };
 
     image.onerror = function () {
-      alert("❌ No se pudo cargar el logo.");
+      alert("❌ No se pudo cargar el logo. Asegúrate de que esté junto al index.html con el nombre 'logo.png'");
     };
   }
 
