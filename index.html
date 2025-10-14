@@ -1,709 +1,1037 @@
+
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gestión de Pagos Quincenales</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SEÑOR AREPA</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 </head>
-<body class="bg-gray-100 text-gray-800 min-h-screen font-sans">
 
-  <header class="bg-blue-900 text-white py-4 shadow-md">
-    <div class="container mx-auto px-4 flex justify-between items-center">
-      <h1 class="text-2xl font-bold tracking-wide">📋 Gestión de Nómina Quincenal</h1>
+<body class="bg-yellow-50 font-sans">
+
+  <!-- Navegación -->
+  <nav class="bg-yellow-400 p-4 flex justify-between items-center text-white font-bold text-lg">
+    <div class="flex items-center space-x-2">
+      <img src="imagenes/señora.png" alt="Logo Señor Arepa" class="w-20 h-20 rounded-full">
+      <span class="text-xl">SEÑOR AREPA</span>
     </div>
-  </header>
+    <div class="flex items-center gap-3">
+      <a href="finanzas1.html" class="bg-white text-yellow-700 font-semibold px-3 py-1 rounded-lg shadow hover:bg-yellow-100 transition" target="_blank">
+        📋 Finanzas
+      </a>
+      <a href="inventario.html" class="bg-yellow-600 text-white font-semibold px-3 py-1 rounded-lg shadow hover:bg-yellow-700 transition" target="_blank">
+        📆 Inventario
+      </a>
+      <span id="baseBadge" class="hidden md:inline text-sm bg-teal-600/80 px-2 py-1 rounded"></span>
+      <span id="currentUserBadge" class="hidden md:inline text-sm bg-yellow-700/80 px-2 py-1 rounded"></span>
+      <button id="btnLogout" onclick="logout()" class="hidden bg-yellow-700 text-white px-3 py-1 rounded">Salir</button>
+    </div>
+  </nav>
 
-  <main class="container mx-auto px-4 py-8">
-
-    <!-- Registro de Empleados -->
-    <section class="bg-white p-6 rounded-xl shadow-lg mb-8">
-      <h2 class="text-2xl font-semibold text-blue-800 mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-user-pen"></i> Registrar Empleado
-      </h2>
-      <form id="form-empleado" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <input type="text" placeholder="👤 Nombre completo" id="nombre" class="border p-3 rounded-lg focus:outline-blue-500" required />
-        <input type="text" placeholder="💼 Cargo" id="cargo" class="border p-3 rounded-lg focus:outline-blue-500" required />
-        <input type="text" placeholder="💰 Valor por día" id="valorDia" class="border p-3 rounded-lg focus:outline-blue-500" required />
-        <input type="text" placeholder="💵 Valor por hora extra" id="valorHoraExtra" class="border p-3 rounded-lg focus:outline-blue-500" />
-
-        <button type="submit" class="col-span-1 md:col-span-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-200 shadow">
-          <i class="fa-solid fa-user-plus mr-2"></i>Agregar Empleado
-        </button>
-      </form>
-    </section>
-
-    <!-- Tabla de empleados -->
-    <section class="bg-white p-6 rounded-xl shadow-lg">
-      <h2 class="text-2xl font-semibold text-blue-800 mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-users"></i> Lista de Empleados
-      </h2>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm text-left border border-gray-200 shadow-sm rounded-lg overflow-hidden">
-          <thead class="bg-blue-100 text-blue-900 font-semibold">
-            <tr>
-              <th class="p-3 border">Nombre</th>
-              <th class="p-3 border">Cargo</th>
-              <th class="p-3 border">Valor Día</th>
-              <th class="p-3 border">Días Trabajados</th>
-              <th class="p-3 border">Días Faltados</th>
-              <th class="p-3 border">Fecha Quincena</th>
-              <th class="p-3 border">Resumen</th>
-              <th class="p-3 border">Estado</th>
-              <th class="p-3 border">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-empleados" class="bg-white"></tbody>
-        </table>
+  <!-- Sección Productos -->
+  <main class="p-6">
+    <h2 class="text-2xl font-bold text-gray-700 mb-4">Menú</h2>
+    <div id="productos" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Comida -->
+      <div class="bg-white p-4 rounded-xl shadow-md">
+        <h3 class="text-xl font-semibold text-yellow-600 mb-2">Comida</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="agregarProducto('AREPA PAISA', 17000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ PAISA - $17.000</button>
+          <button onclick="agregarProducto('AREPA PAISA POLLO', 17000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ PAISA POLLO - $17.000</button>
+          <button onclick="agregarProducto('AREPA CHICHARRON', 14000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ CHICHARRON - $14.000</button>
+          <button onclick="agregarProducto('AREPA EXTRA QUESILLO', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ EXTRA QUESILLO - $9.000</button>
+          <button onclick="agregarProducto('AREPA SEÑOR AREPA', 14000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ SEÑOR AREPA - $14.000</button>
+          <button onclick="agregarProducto('AREPA SEÑORA AREPA', 14000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ SEÑORA AREPA - $14.000</button>
+          <button onclick="agregarProducto('AREPA HAWAIANA', 14000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ HAWAIANA - $14.000</button>
+          <button onclick="agregarProducto('AREPA MEGAPAISA', 22000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ MEGAPAISA- $22.000</button>
+          <button onclick="agregarProducto('AREPA MIXTA', 14000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ MIXTA - $14.000</button>
+          <button onclick="agregarProducto('AREPA RANCHERA', 14000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ RANCHERA - $14.000</button>
+          <button onclick="agregarProducto('AREPA SOLO POLLO', 15000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ SOLO POLLO - $15.000</button>
+          <button onclick="agregarProducto('AREPA SOLO CARNE', 15000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ SOLO CARNE - $15.000</button>
+          <button onclick="agregarProducto('AREPA MEXICANA', 15000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ MEXICANA - $15.000</button>
+          <button onclick="agregarProducto('AREPA SOLA', 1000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">⚪ AREPA SOLA - $1.000</button> 
+        </div>
       </div>
-    </section>
+
+      <!-- Adiciones -->
+      <div class="bg-white p-4 rounded-xl shadow-md">
+        <h3 class="text-xl font-semibold text-yellow-600 mb-2">Adiciones</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="agregarProducto('ADICION QUESO EXTRA', 5000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🧀 Queso Extra - $5.000</button>
+          <button onclick="agregarProducto('ADICION MAIZ TIERNO', 3000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🌽 MAIZ TIERNO - $3.000</button>
+          <button onclick="agregarProducto('ADICION PIÑA CALADA', 5000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🍍 PIÑA CALADA - $5.000</button>
+          <button onclick="agregarProducto('ADICION POLLO', 7000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🍗 POLLO - $7.000</button>
+          <button onclick="agregarProducto('ADICION CARNE', 7000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥩 CARNE - $7.000</button>
+          <button onclick="agregarProducto('ADICION CHICHARRON', 6000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🍖 CHICHARRON - $6.000</button>
+          <button onclick="agregarProducto('ADICION RANCHERA', 7000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🔥 RANCHERA - $7.000</button>
+          <button onclick="agregarProducto('ADICION CHORIZO', 7000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🌭 CHORIZO - $7.000</button>
+          <button onclick="agregarProducto('ADICION TOCINETA', 7000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥓 TOCINETA - $7.000</button>
+          <button onclick="agregarProducto('ADICION MADURO', 3000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🍌  MADURO - $3.000</button>
+          <button onclick="agregarProducto('ADICION ARMA TU AREPA X5', 25000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🍌 ARMA TU AREPA - $25.000</button>
+        </div>
+      </div>
+
+      <!-- Bebidas -->
+      <div class="bg-white p-4 rounded-xl shadow-md">
+        <h3 class="text-xl font-semibold text-yellow-600 mb-2">Bebidas</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="agregarProducto('QUATRO', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🍋 QUATRO - $4.000</button>
+          <button onclick="agregarProducto('COCA COLA 400 ml', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 COCA COLA - $4.000</button>
+          <button onclick="agregarProducto('COCA COLA 250 ml', 3000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 COCA COLA - $3.000</button>
+          <button onclick="agregarProducto('JUGO HIT 500 ml', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 JUGO HIT - $4.000</button>
+          <button onclick="agregarProducto('SPRITE', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 SPRITE - $4.000</button>
+          <button onclick="agregarProducto('COCA COLA CERO', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 COCA COLA CERO - $4.000</button>
+          <button onclick="agregarProducto('BRISA LIMON', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 BRISA LIMON - $4.000</button>
+          <button onclick="agregarProducto('BRISA MANZANA', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">💧 BRISA MANZANA - $4.000</button>
+          <button onclick="agregarProducto('MISTER TEA', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 MISTER TEA - $4.000</button>
+          <button onclick="agregarProducto('AGUA CON GAS', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 AGUA CON GAS - $4.000</button>
+          <button onclick="agregarProducto('AGUA SABORISADA', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 AGUA SABORISADA - $4.000</button>
+          <button onclick="agregarProducto('POSTOBON 400 ml', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 POSTOBON 400 - $4.000</button>
+          <button onclick="agregarProducto('POSTOBON 250 ml', 3000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 POSTOBON 250 - $3.000</button>
+          <button onclick="agregarProducto('POSTOBON 1.5', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 POSTOBON 1.5 - $9.000</button>
+          <button onclick="agregarProducto('SODA BRETAÑA', 4500)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 SODA BRETAÑA - $4.500</button>
+          <button onclick="agregarProducto('GATORADE', 6000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 GATORADE - $6.000</button>
+          <button onclick="agregarProducto('PREMIO 400 ml', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 PREMIO 400 ml - $4.000</button>
+          <button onclick="agregarProducto('PREMIO 1.5l', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 PREMIO 1.5l - $9.000</button>
+          <button onclick="agregarProducto('QUATRO 1.5L', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 QUATRO 1.5L - $9.000</button>
+          <button onclick="agregarProducto('COCA COLA 1.5L', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 COCA COLA  1.5L - $9.000</button>
+          <button onclick="agregarProducto('JUGO HIT 1.L', 7500)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 JUGO HIT 1.L - $7.500</button>
+          <button onclick="agregarProducto('SPRITE 1.5L', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 SPRITE 1.5L - $9.000</button>
+          <button onclick="agregarProducto('COCA COLA ZERO 1.5L', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 COCA COLA ZERO 1.5L - $9.000</button>
+          <button onclick="agregarProducto(' AGUA', 3000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 AGUA - $3.000</button>
+          <button onclick="agregarProducto('MILO CALIENTE', 6000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥛 MILO CALIENTE - $6.000</button>
+          <button onclick="agregarProducto('CAFE CON LECHE', 5000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">☕🥛 CAFE CON LECHE - $5.000</button>
+          <button onclick="agregarProducto('TINTO', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">☕ TINTO - $4.000</button>
+          <button onclick="agregarProducto('CERVEZA', 6000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🍺 CERVEZA - $6.000</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalle de Pedido -->
+    <div class="mt-6 bg-white p-4 rounded-xl shadow-md">
+      <h3 class="text-lg font-semibold mb-4 border-b pb-2">🛒 Pedido Actual</h3>
+      <ul id="listaPedido" class="list-disc pl-5 text-gray-700 space-y-1"></ul>
+      <p id="total" class="mt-4 font-bold text-lg text-gray-800">Total: $0</p>
+    </div>
+
+    <!-- Cliente y forma de pago -->
+    <div class="mt-4 flex flex-col md:flex-row gap-4">
+      <input type="text" id="cliente" placeholder="Nombre del Cliente" class="flex-1 p-2 border border-yellow-300 rounded" />
+      <input type="text" id="observaciones" placeholder="Observaciones (Ej: Sin cebolla, agregar salsas, etc.)" class="flex-1 p-2 border border-yellow-300 rounded" />
+      <select id="formaPago" class="flex-1 p-2 border border-yellow-300 rounded" onchange="toggleEfectivoSection()">
+        <option value="">Seleccione forma de pago</option>
+        <option value="Efectivo">Efectivo</option>
+        <option value="Tarjeta">Tarjeta</option>
+        <option value="Transferencia">Transferencia</option>
+        <option value="Nequi/Daviplata">Nequi/Daviplata</option>
+      </select>
+    </div>
+
+    <!-- Tipo de pedido -->
+    <div class="mt-4">
+      <label for="tipoPedido" class="block text-sm font-medium text-gray-700">Tipo de Pedido</label>
+      <select id="tipoPedido" class="mt-1 p-2 border rounded w-full">
+        <option value="">Selecciona</option>
+        <option value="Aquí">Aquí</option>
+        <option value="Para llevar">Para llevar</option>
+        <option value="Domicilio">Domicilio</option>
+      </select>
+    </div>
+
+    <!-- Efectivo recibido (solo cuando es Efectivo) -->
+    <div id="efectivoSection" class="mt-6 bg-white p-4 rounded-xl shadow-md hidden">
+      <h3 class="text-lg font-semibold mb-2">💵 Efectivo recibido</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <label>100.000 <input id="ef_100000" type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>50.000  <input id="ef_50000"  type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>20.000  <input id="ef_20000"  type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>10.000  <input id="ef_10000"  type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>5.000   <input id="ef_5000"   type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>2.000   <input id="ef_2000"   type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>1.000   <input id="ef_1000"   type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>500     <input id="ef_500"    type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>200     <input id="ef_200"    type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>100     <input id="ef_100"    type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>50      <input id="ef_50"     type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+        <label>20      <input id="ef_20"     type="number" min="0" value="0" class="p-1 border rounded w-full" oninput="capturarEfectivoRecibido()"></label>
+      </div>
+      <p id="ef_total" class="mt-2 text-sm text-gray-600"></p>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="mt-6 flex flex-wrap gap-2">
+      <button id="btnGuardarVenta" onclick="guardarVenta()" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">💾 Guardar Venta</button>
+      <button id="btnImprimirCocina" onclick="imprimirUltimaCocinero()" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">🖨️ Imprimir para Cocina</button>
+      <button id="btnImprimirCliente" onclick="imprimirUltimaCliente()" class="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded">🧾 Imprimir Recibo Cliente</button>
+      <button id="btnBaseCaja" onclick="abrirModalBaseCaja()" class="bg-teal-600 hover:bg-teal-700 text-white p-2 rounded">📦 Base de Caja</button>
+      <button id="btnExportarExcel" onclick="exportarVentasExcelConEstilo()" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded">📊 Exportar Ventas a Excel</button>
+      <button id="btnBorrarVentas" onclick="borrarVentas()" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded">🗑️ Borrar Ventas</button>
+      <button id="btnResumenProductos" onclick="generarResumenProductos()" class="bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded">📊 Ver Resumen Productos</button>
+      <button id="btnCierreCaja" onclick="cierreDeCaja()" class="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded">💰 Cierre de Caja</button>
+    </div>
+
+    <!-- Visualización de Ventas Guardadas (ambos roles, con acciones según rol) -->
+    <div id="ventasSeccion" class="mt-8 bg-white p-4 rounded-xl shadow-md">
+      <h3 class="text-lg font-semibold mb-2">Ventas Guardadas</h3>
+      <div class="mb-4">
+        <input type="text" id="filtroCliente" oninput="filtrarVentasPorCliente()" placeholder="🔍 Filtrar por cliente..." class="w-full md:w-1/3 p-2 border border-yellow-300 rounded" />
+      </div>
+      <table class="min-w-full text-left border">
+        <thead>
+          <tr class="bg-yellow-200">
+            <th class="p-2 border">#</th>
+            <th class="p-2 border">Fecha</th>
+            <th class="p-2 border">Cliente</th>
+            <th class="p-2 border">Forma de Pago</th>
+            <th class="p-2 border">Tipo de Pedido</th>
+            <th class="p-2 border">Productos</th>
+            <th class="p-2 border">Total</th>
+            <th id="thAcciones" class="p-2 border">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="ventasGuardadas" class="text-sm text-gray-800"></tbody>
+      </table>
+    </div>
+
+    <!-- Resumen Productos (solo admin) -->
+    <div id="resumenProductos" class="mt-8 bg-white p-4 rounded-xl shadow-md hidden">
+      <h3 class="text-lg font-semibold mb-2">Resumen de Productos Vendidos</h3>
+      <ul id="listaResumen" class="list-disc pl-5 text-gray-700 space-y-1"></ul>
+    </div>
+
+    <!-- Gestión de Usuarios (solo admin) -->
+    <div id="adminUsuariosSection" class="hidden mt-8 bg-white p-4 rounded-xl shadow-md">
+      <h3 class="text-lg font-semibold mb-2">Gestión de Usuarios</h3>
+      <form onsubmit="return addUserFromForm(event)" class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
+        <input id="newUsername" class="p-2 border rounded" placeholder="Usuario" required>
+        <input id="newPassword" type="password" class="p-2 border rounded" placeholder="Contraseña" required>
+        <select id="newRole" class="p-2 border rounded">
+          <option value="cajero">Cajero</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded">➕ Agregar</button>
+      </form>
+      <table class="min-w-full text-left border">
+        <thead>
+          <tr class="bg-yellow-200">
+            <th class="p-2 border">Usuario</th>
+            <th class="p-2 border">Rol</th>
+            <th class="p-2 border">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="usuariosTbody"></tbody>
+      </table>
+    </div>
   </main>
 
-
-  <section class="bg-white p-6 rounded-xl shadow-lg mt-8">
-
-  <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-  <h2 class="text-xl font-bold text-blue-800">📚 Historial de Pagos</h2>
-  <div class="flex gap-2">
-    <button onclick="exportarHistorialAExcel()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-  📥 Exportar a Excel
-</button>
-
-<button onclick="eliminarHistorial()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow text-sm">
-  🗑 Eliminar Historial
-</button>
-  </div>
-</div>
-
-
-  <div class="overflow-x-auto">
-    <table class="w-full text-sm text-left border border-gray-200 shadow-sm rounded-lg">
-<thead class="bg-gray-100 text-gray-700 font-semibold">
-  <tr>
-    <th class="p-2 border">Nombre</th>
-    <th class="p-2 border">Cargo</th>
-    <th class="p-2 border">Fecha de Pago</th>
-    <th class="p-2 border">Quincena</th>
-    <th class="p-2 border">Días Trabajados</th>
-    <th class="p-2 border">Valor Día</th>
-    <th class="p-2 border">Horas Extras</th>
-    <th class="p-2 border">Bonificación</th>
-    <th class="p-2 border">Total Pagado</th>
-  </tr>
-</thead>
-
-      <tbody id="tabla-historial"></tbody>
-    </table>
-  </div>
-</section>
-
-
-  <!-- Contenedor invisible para generar PDF -->
-  <div id="pdf-container" class="hidden"></div>
-
-  <!-- Modal de asistencia -->
-<div id="modalAsistencia" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-  <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-    <h3 class="text-xl font-bold text-blue-800 mb-4">Editar Asistencia</h3>
-    <div class="space-y-4">
-      <p class="text-gray-700 font-medium">Empleado: <span id="modal-nombre" class="font-semibold text-black"></span></p>
-      <label class="block">
-        <span class="text-sm text-gray-600">Días trabajados (0-15)</span>
-        <input type="number" id="inputDias" min="0" max="15" class="mt-1 block w-full border rounded p-2 focus:outline-blue-500" />
-      </label>
-
-      <label class="block text-sm text-gray-700 mt-3">🕐 Horas Extras</label>
-<input type="number" id="inputHorasExtras" class="border p-2 w-full rounded focus:outline-blue-500" min="0" />
-
-<label class="block text-sm text-gray-700 mt-3">🎁 Bonificación</label>
-<input type="text" id="inputBonificacion" class="border p-2 w-full rounded focus:outline-blue-500" />
-<label class="block text-sm text-gray-700 mt-3">💸 Dinero Prestado</label>
-<input type="text" id="inputPrestamo" class="border p-2 w-full rounded focus:outline-blue-500" />
-
-
-      <div class="flex justify-end gap-2">
-        <button onclick="cerrarModal()" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Cancelar</button>
-        <button onclick="guardarAsistencia()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Guardar</button>
+  <!-- MODAL: Registrar Vuelto -->
+  <div id="modalVuelto" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-96">
+      <h2 class="text-xl font-bold mb-4">Registrar Vuelto</h2>
+      <p id="vueltoRequeridoTexto" class="text-sm text-gray-700 mb-3"></p>
+      <table class="w-full text-left mb-4">
+        <thead>
+          <tr>
+            <th class="py-1">Denominación</th>
+            <th class="py-1">Cantidad</th>
+          </tr>
+        </thead>
+        <tbody id="tablaVuelto"></tbody>
+      </table>
+      <div class="flex gap-2 justify-end">
+        <button onclick="confirmarVuelto()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">Confirmar</button>
+        <button onclick="cerrarModalVuelto()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Cancelar</button>
       </div>
     </div>
   </div>
-</div>
 
+  <!-- MODAL: Base de Caja -->
+  <div id="modalBaseCaja" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-96">
+      <h2 class="text-xl font-bold mb-2">📦 Base de Caja (Hoy)</h2>
+      <p class="text-sm text-gray-600 mb-3">Ingresa la cantidad de billetes y monedas iniciales.</p>
+      <table class="w-full text-left mb-3">
+        <thead>
+          <tr>
+            <th class="py-1">Denominación</th>
+            <th class="py-1">Cantidad</th>
+          </tr>
+        </thead>
+        <tbody id="tablaBaseCaja"></tbody>
+      </table>
+      <p id="baseTotalTexto" class="text-sm text-gray-700 mb-3"></p>
+      <div class="flex gap-2 justify-end">
+        <button id="btnGuardarBase" onclick="confirmarBaseCaja()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded">Guardar</button>
+        <button onclick="cerrarModalBaseCaja()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded">Cerrar</button>
+      </div>
+      <p id="baseMetaInfo" class="text-xs text-gray-500 mt-3"></p>
+    </div>
+  </div>
 
-
-
-
-
-
-
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
-
-
+  <!-- MODAL: Login -->
+  <div id="loginModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg p-6 w-96">
+      <h2 class="text-xl font-bold mb-4">Iniciar sesión</h2>
+      <form onsubmit="return loginFromModal(event)" class="space-y-3">
+        <input id="loginUser" class="p-2 border rounded w-full" placeholder="Usuario" required>
+        <input id="loginPass" type="password" class="p-2 border rounded w-full" placeholder="Contraseña" required>
+        <button class="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded">Entrar</button>
+      </form>
+      <p class="text-xs text-gray-500 mt-3">Primer uso: admin / admin123</p>
+    </div>
+  </div>
 
   <script>
-    let empleadoActual = null;
-    let historial = JSON.parse(localStorage.getItem("historialPagos")) || [];
-    let empleados = JSON.parse(localStorage.getItem("empleados")) || [];
+  /**********  CONSTANTES & ESTADO  **********/
+  const DENOMS = ["100000","50000","20000","10000","5000","2000","1000","500","200","100","50","20"];
+  let pedido = [];
+  let total = 0;
+  let comandaEnEdicion = null;
+  let ventaTemporal = null;
 
-    const form = document.getElementById("form-empleado");
-    const tabla = document.getElementById("tabla-empleados");
+  /**********  AUTH & ROLES (localStorage)  **********/
+  function ensureUsersInit() {
+    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    if (users.length === 0) {
+      const defaultAdmin = { username: 'admin', role: 'admin', password: 'admin123' };
+      localStorage.setItem('users', JSON.stringify([defaultAdmin]));
+    }
+  }
+  function getUsers(){ return JSON.parse(localStorage.getItem('users') || '[]'); }
+  function setUsers(arr){ localStorage.setItem('users', JSON.stringify(arr)); renderUsersTable(); }
+  function getSessionUser(){ return JSON.parse(localStorage.getItem('sessionUser') || 'null'); }
+  function setSessionUser(user){ localStorage.setItem('sessionUser', JSON.stringify(user)); }
+  function isAdmin(){ return getSessionUser()?.role === 'admin'; }
 
-form.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const nombre = document.getElementById("nombre").value.trim();
-  const cargo = document.getElementById("cargo").value.trim();
-  const valorDia = parseInt(limpiarNumeroCOP(document.getElementById("valorDia").value));
-  const valorHoraExtra = parseInt(limpiarNumeroCOP(document.getElementById("valorHoraExtra").value)) || 0;
+  function showLoginModal(){ const m = document.getElementById('loginModal'); m.classList.remove('hidden'); m.classList.add('flex'); }
+  function hideLoginModal(){ const m = document.getElementById('loginModal'); m.classList.add('hidden'); m.classList.remove('flex'); }
 
-
-
-  if (!nombre || !cargo || isNaN(valorDia)) return alert("Complete todos los campos correctamente.");
-
-  // Verificar si ya existe un empleado con el mismo nombre y cargo
-  const yaExiste = empleados.some(emp =>
-    emp.nombre.toLowerCase() === nombre.toLowerCase() &&
-    emp.cargo.toLowerCase() === cargo.toLowerCase()
-  );
-
-  if (yaExiste) {
-    alert("Ya existe un empleado registrado con ese nombre y cargo.");
-    return;
+  function loginFromModal(e){
+    e.preventDefault();
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value;
+    const users = getUsers();
+    const found = users.find(x => x.username === u && x.password === p);
+    if(!found){ alert("Usuario o contraseña incorrectos."); return false; }
+    setSessionUser({ username: found.username, role: found.role });
+    hideLoginModal();
+    applyRoleUI();
+    mostrarVentas();
+    autoPromptBaseIfMissing();
+    return false;
+  }
+  function logout(){
+    localStorage.removeItem('sessionUser');
+    applyRoleUI();
+    showLoginModal();
   }
 
-empleados.push({
-  id: Date.now(),
-  nombre,
-  cargo,
-  valorDia,
-  valorHoraExtra,
-  diasTrabajados: 0,
-  horasExtras: 0,
-  bonificacion: 0,
-  estadoPago: "Pendiente"
-});
+  function addUserFromForm(e){
+    e.preventDefault();
+    if(!isAdmin()){ alert("Solo el Administrador puede gestionar usuarios."); return false; }
+    const username = document.getElementById('newUsername').value.trim();
+    const password = document.getElementById('newPassword').value;
+    const role     = document.getElementById('newRole').value;
+    if(!username || !password) { alert("Usuario y contraseña requeridos."); return false; }
+    const users = getUsers();
+    if(users.find(u => u.username === username)){ alert("Ese usuario ya existe."); return false; }
+    users.push({ username, role, password });
+    setUsers(users);
+    document.getElementById('newUsername').value = "";
+    document.getElementById('newPassword').value = "";
+    document.getElementById('newRole').value = "cajero";
+    alert("Usuario agregado.");
+    return false;
+  }
+  function deleteUser(username){
+    if(!isAdmin()){ alert("Solo el Administrador puede eliminar usuarios."); return; }
+    const users = getUsers();
+    const me = getSessionUser();
+    if(me && me.username === username){ alert("No puedes eliminar tu propia cuenta mientras estás conectado."); return; }
+    const admins = users.filter(u => u.role === 'admin');
+    const target = users.find(u => u.username === username);
+    if(target?.role === 'admin' && admins.length <= 1){ alert("Debe existir al menos un administrador."); return; }
+    const filtered = users.filter(u => u.username !== username);
+    setUsers(filtered);
+    alert("Usuario eliminado.");
+  }
+  function renderUsersTable(){
+    const tbody = document.getElementById('usuariosTbody');
+    if(!tbody) return;
+    const users = getUsers();
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td class="p-2 border">${u.username}</td>
+        <td class="p-2 border">${u.role}</td>
+        <td class="p-2 border">
+          <button onclick="deleteUser('${u.username.replace(/'/g,"\\'")}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">Eliminar</button>
+        </td>
+      </tr>
+    `).join("");
+  }
 
+  function toggleDisplay(id, show){
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(show) el.classList.remove('hidden');
+    else el.classList.add('hidden');
+  }
 
-  localStorage.setItem("empleados", JSON.stringify(empleados));
-  form.reset();
-  mostrarEmpleados();
-});
+  function applyRoleUI(){
+    const badge = document.getElementById('currentUserBadge');
+    const baseBadge = document.getElementById('baseBadge');
+    const btnLogout = document.getElementById('btnLogout');
+    const user = getSessionUser();
 
+    if(user){
+      badge.textContent = `${user.username} (${user.role})`;
+      badge.classList.remove('hidden');
+      btnLogout.classList.remove('hidden');
+      hideLoginModal();
+    }else{
+      badge.classList.add('hidden');
+      btnLogout.classList.add('hidden');
+    }
 
-    function mostrarEmpleados() {
-      tabla.innerHTML = "";
-      empleados.forEach(emp => {
-        const diasFaltados = 15 - emp.diasTrabajados;
-        const totalTrabajado = emp.valorDia * emp.diasTrabajados;
-        const totalQuincena = emp.valorDia * 15;
-        const diferencia = totalQuincena - totalTrabajado;
-        const estadoColor = emp.estadoPago === "Pagado" ? "text-green-600" : "text-red-600";
-        const btnDesactivado = emp.estadoPago === "Pagado" ? "opacity-50 cursor-not-allowed" : "";
-        const extras = (emp.horasExtras || 0) * (emp.valorHoraExtra || 0);
-        const bonificacion = emp.bonificacion || 0;
-        const totalFinal = totalTrabajado + extras + bonificacion;
-        const prestamo = emp.prestamo || 0;
-        const totalPagarConDescuento = totalFinal - prestamo;
+    const admin = isAdmin();
 
+    // Ventas guardadas visible para ambos
+    toggleDisplay('ventasSeccion', true);
 
+    // Secciones solo admin
+    toggleDisplay('resumenProductos', admin);
+    toggleDisplay('adminUsuariosSection', admin);
+    toggleDisplay('btnExportarExcel', admin);
+    toggleDisplay('btnBorrarVentas', admin);
+    toggleDisplay('btnResumenProductos', admin);
 
-        tabla.innerHTML += `
-          <tr class="hover:bg-gray-50 transition-all duration-200">
-            <td class="p-3 border">${emp.nombre}</td>
-            <td class="p-3 border">${emp.cargo}</td>
-            <td class="p-3 border">${formatearCOP(emp.valorDia)}</td>
+    // Cierre de caja y base visibles para ambos
+    toggleDisplay('btnCierreCaja', true);
+    toggleDisplay('btnBaseCaja', true);
 
-            <td class="p-3 border">${emp.diasTrabajados}</td>
-            <td class="p-3 border">${diasFaltados}</td>
-            <td class="p-3 border">${generarRangoQuincena(emp.fechaPago)}</td>
-            <td class="p-3 border">
-            
+    // Encabezado de Acciones siempre visible (cajero imprime, admin imprime/edita)
+    const thAcc = document.getElementById('thAcciones');
+    if (thAcc) thAcc.classList.remove('hidden');
 
-            <div>Total base: <strong>${formatearCOP(totalTrabajado)}</strong></div>
-             ${extras > 0 ? `
+    // Efectivo visible según forma de pago
+    toggleEfectivoSection();
 
-            <div class="text-xs text-blue-500">Horas extra: +${formatearCOP(extras)}</div>` : ""}${bonificacion > 0 ? `
+    // Badge de base
+    updateBaseBadge();
+  }
 
- 
-            <div class="text-xs text-blue-500">Bonificación: +${formatearCOP(bonificacion)}</div>` : ""}
-            <div class="text-sm text-green-700 font-bold">💵 Total a pagar: ${formatearCOP(totalPagarConDescuento)}</div>
-             ${prestamo > 0 ? `<div class="text-xs text-red-500">Prestado: -${formatearCOP(prestamo)}</div>` : ""}
+  /**********  UTILIDADES DE FECHA **********/
+  function todayStr(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
 
-            <div>Total: <strong>${formatearCOP(totalTrabajado)}</strong></div>
-            <div class="text-xs text-gray-500">Completa: ${formatearCOP(totalQuincena)}</div>
-             ${diasFaltados > 0 ? `<div class="text-xs text-red-500">Faltó: -${formatearCOP(diferencia)}</div>` : ""}
+  /**********  BASE DE CAJA **********/
+  function getBaseCaja() {
+    const data = JSON.parse(localStorage.getItem('baseCaja') || 'null');
+    if(!data) return null;
+    if(data.fecha !== todayStr()) return null;
+    return data;
+  }
+  function setBaseCaja(counts) {
+    let monto = 0;
+    DENOMS.forEach(d => { monto += (counts[d] || 0) * parseInt(d,10); });
+    const user = getSessionUser();
+    const payload = {
+      fecha: todayStr(),
+      counts,
+      monto,
+      usuario: user?.username || 'N/A',
+      hora: new Date().toLocaleString()
+    };
+    localStorage.setItem('baseCaja', JSON.stringify(payload));
+    updateBaseBadge();
+  }
+  function updateBaseBadge(){
+    const base = getBaseCaja();
+    const el = document.getElementById('baseBadge');
+    if(!el) return;
+    if(base){
+      el.textContent = `Base hoy: $${base.monto.toLocaleString('es-CO')} (${base.usuario})`;
+      el.classList.remove('hidden');
+    }else{
+      el.textContent = `Base no registrada`;
+      el.classList.remove('hidden');
+    }
+  }
+  function autoPromptBaseIfMissing(){
+    if(!getBaseCaja()){ abrirModalBaseCaja(true); } // true => apertura automática (informativo)
+  }
 
+  function abrirModalBaseCaja(auto=false){
+    const tbody = document.getElementById('tablaBaseCaja');
+    tbody.innerHTML = "";
+    const base = getBaseCaja();
+    const admin = isAdmin();
 
-            
-            <td class="p-3 border font-bold ${estadoColor}">${emp.estadoPago}</td>
-            <td class="p-3 border space-y-1">
+    // Construir filas
+    DENOMS.forEach(d=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="py-1">${parseInt(d,10).toLocaleString('es-CO')} COP</td>
+        <td class="py-1">
+          <input id="base_${d}" type="number" min="0" value="0" class="p-1 border rounded w-full">
+        </td>`;
+      tbody.appendChild(tr);
+    });
 
-
-              <button onclick="registrarAsistencia(${emp.id})" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded text-xs w-full ${btnDesactivado}" ${emp.estadoPago === "Pagado" ? "disabled" : ""}>Asistencia</button>
-
-              ${emp.estadoPago === "Pendiente" ? `
-  <button onclick="marcarComoPagado(${emp.id})"
-    class="bg-green-100 hover:bg-green-200 text-green-800 px-2 py-1 rounded text-xs w-full">
-    Marcar Pagado
-  </button>` : `
-  <button onclick="desmarcarPagado(${emp.id})"
-    class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-2 py-1 rounded text-xs w-full">
-    Desmarcar Pagado
-  </button>`}
-
-              
-              <button onclick="generarPDF(${emp.id})" class="bg-purple-100 hover:bg-purple-200 text-purple-800 px-2 py-1 rounded text-xs w-full">Generar PDF</button>
-
-
-              <button onclick="eliminarEmpleado(${emp.id})" class="bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded text-xs w-full">Eliminar</button>
-
-            </td>
-          </tr>
-        `;
+    // Prefill si existe base
+    if(base){
+      DENOMS.forEach(d=>{
+        const el = document.getElementById(`base_${d}`);
+        if(el) el.value = base.counts[d] || 0;
       });
     }
 
+    // Modo lectura para cajero si ya existe
+    const readOnly = !!base && !admin;
+    DENOMS.forEach(d=>{
+      const el = document.getElementById(`base_${d}`);
+      if(el) el.disabled = readOnly;
+    });
 
-function eliminarEmpleado(id) {
-  if (confirm("¿Estás seguro de eliminar este empleado?")) {
-    empleados = empleados.filter(emp => emp.id !== id);
-    localStorage.setItem("empleados", JSON.stringify(empleados));
-    mostrarEmpleados();
+    // Texto total y metainfo
+    recalcularBaseTotalTexto();
+    const meta = document.getElementById('baseMetaInfo');
+    if(base){
+      meta.textContent = `Registrada por ${base.usuario} a las ${base.hora}.`;
+    }else{
+      meta.textContent = `No hay base registrada para hoy (${todayStr()}).`;
+    }
+
+    // Botón guardar visible solo si:
+    // - no existe base (cualquier rol puede guardar)
+    // - existe base y es admin (puede actualizar)
+    const btn = document.getElementById('btnGuardarBase');
+    if(!base || admin){
+      btn.classList.remove('hidden');
+      btn.textContent = base ? 'Actualizar' : 'Guardar';
+      btn.disabled = false;
+    }else{
+      btn.classList.add('hidden');
+    }
+
+    const m = document.getElementById("modalBaseCaja");
+    m.classList.remove('hidden'); m.classList.add('flex');
   }
-}
+  function cerrarModalBaseCaja(){
+    const m = document.getElementById("modalBaseCaja");
+    m.classList.add('hidden'); m.classList.remove('flex');
+  }
+  function recalcularBaseTotalTexto(){
+    let total = 0;
+    DENOMS.forEach(d=>{
+      const el = document.getElementById(`base_${d}`);
+      const c = parseInt(el?.value || "0",10) || 0;
+      total += c * parseInt(d,10);
+    });
+    document.getElementById('baseTotalTexto').textContent = `Total base: $${total.toLocaleString('es-CO')}`;
+  }
+  // Recalc en vivo
+  document.addEventListener('input', (e)=>{
+    if(e.target && e.target.id && e.target.id.startsWith('base_')){
+      recalcularBaseTotalTexto();
+    }
+  });
+  function confirmarBaseCaja(){
+    const counts = {};
+    DENOMS.forEach(d=>{
+      const c = parseInt(document.getElementById(`base_${d}`)?.value || "0",10) || 0;
+      counts[d] = c;
+    });
+    setBaseCaja(counts);
+    alert("Base de caja guardada.");
+    cerrarModalBaseCaja();
+  }
 
+  /**********  PEDIDOS **********/
+  function agregarProducto(nombre, precio) {
+    pedido.push({ nombre, precio });
+    actualizarTotal();
+    actualizarVistaPedido();
+  }
+  function quitarProducto(index) {
+    if (index >= 0 && index < pedido.length) {
+      pedido.splice(index, 1);
+      actualizarTotal();
+      actualizarVistaPedido();
+    }
+  }
+  function actualizarTotal() { total = pedido.reduce((acc, p) => acc + p.precio, 0); }
+  function actualizarVistaPedido() {
+    const lista = document.getElementById("listaPedido");
+    lista.innerHTML = "";
+    pedido.forEach((p, i) => {
+      const li = document.createElement("li");
+      li.innerHTML = `${p.nombre} - $${p.precio.toLocaleString('es-CO')} <button onclick="quitarProducto(${i})" class='text-red-600 ml-2'>❌</button>`;
+      lista.appendChild(li);
+    });
+    document.getElementById("total").textContent = `Total: $${total.toLocaleString('es-CO')}`;
+  }
+  function toggleEfectivoSection(){
+    const forma = document.getElementById("formaPago").value;
+    const sec = document.getElementById("efectivoSection");
+    if(forma === "Efectivo") sec.classList.remove('hidden');
+    else sec.classList.add('hidden');
+  }
+  function capturarEfectivoRecibido() {
+    const recibidos = {};
+    let totalRecibido = 0;
+    DENOMS.forEach(d => {
+      const val = parseInt(document.getElementById(`ef_${d}`)?.value || "0", 10) || 0;
+      recibidos[d] = val;
+      totalRecibido += val * parseInt(d, 10);
+    });
+    const el = document.getElementById("ef_total");
+    if(el) el.textContent = `Efectivo ingresado: $${totalRecibido.toLocaleString('es-CO')}`;
+    return { recibidos, totalRecibido };
+  }
+  function limpiarPedido() {
+    pedido = []; total = 0; actualizarVistaPedido();
+    ["cliente","formaPago","tipoPedido","observaciones"].forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
+    const eftxt = document.getElementById("ef_total"); if(eftxt) eftxt.textContent = "";
+    DENOMS.forEach(d => { const el = document.getElementById(`ef_${d}`); if(el) el.value = 0; });
+    toggleEfectivoSection();
+  }
 
-function registrarAsistencia(id) {
-  empleadoActual = empleados.find(emp => emp.id === id);
-  document.getElementById("modal-nombre").textContent = empleadoActual.nombre;
-  document.getElementById("inputDias").value = empleadoActual.diasTrabajados;
-  document.getElementById("modalAsistencia").classList.remove("hidden");
-document.getElementById("inputHorasExtras").value = empleadoActual.horasExtras || 0;
-document.getElementById("inputBonificacion").value = empleadoActual.bonificacion ? formatearCOP(empleadoActual.bonificacion) : "";
-document.getElementById("inputPrestamo").value = empleadoActual.prestamo ? formatearCOP(empleadoActual.prestamo) : "";
+  /**********  GUARDAR VENTA + MODAL VUELTO **********/
+  function guardarVenta() {
+    if(!getSessionUser()){ showLoginModal(); return; }
+    const cliente = document.getElementById("cliente").value.trim();
+    const formaPago = document.getElementById("formaPago").value;
+    const tipoPedido = document.getElementById("tipoPedido").value;
+    if (pedido.length === 0) return alert("Agrega productos al pedido.");
+    if (!cliente) return alert("Por favor ingresa el nombre del cliente.");
+    if (!formaPago) return alert("Por favor selecciona una forma de pago.");
+    if (!tipoPedido) return alert("Por favor selecciona un tipo de pedido.");
+    const observaciones = document.getElementById("observaciones").value.trim();
 
+    const { recibidos: billetesRecibidos, totalRecibido: efectivoRecibido } = capturarEfectivoRecibido();
+    let vuelto = 0;
+    if (formaPago === "Efectivo") {
+      if (efectivoRecibido < total) return alert(`Efectivo insuficiente. Faltan $${(total - efectivoRecibido).toLocaleString('es-CO')}.`);
+      vuelto = efectivoRecibido - total;
+    } else {
+      DENOMS.forEach(d => billetesRecibidos[d] = 0);
+    }
 
+    const baseVenta = {
+      cliente, formaPago, tipoPedido, observaciones,
+      pedido: [...pedido], total,
+      fecha: new Date().toLocaleString(),
+      billetesRecibidos, billetesDevueltos: {},
+      efectivoRecibido
+    };
 
-}
-
-
-
-function marcarComoPagado(id) {
-  const index = empleados.findIndex(emp => emp.id === id);
-  const empleado = empleados[index];
-  const totalBase = empleado.valorDia * empleado.diasTrabajados;
-const totalExtras = (empleado.horasExtras || 0) * (empleado.valorHoraExtra || 0);
-const totalFinal = totalBase + (empleado.bonificacion || 0) + totalExtras;
-
-  const fechaPago = new Date().toISOString();
-  empleados[index].estadoPago = "Pagado";
-  empleados[index].fechaPago = fechaPago;
-
-  // Agregar al historial
-historial.push({
-  nombre: empleado.nombre,
-  cargo: empleado.cargo,
-  valorDia: empleado.valorDia,
-  diasTrabajados: empleado.diasTrabajados,
-  horasExtras: empleado.horasExtras || 0,
-  valorHoraExtra: empleado.valorHoraExtra || 0,
-  bonificacion: empleado.bonificacion || 0,
-  totalPagado: totalFinal,
-  fechaPago: fechaPago,
-  quincena: generarRangoQuincena(fechaPago)
-});
-
-
-  localStorage.setItem("empleados", JSON.stringify(empleados));
-  localStorage.setItem("historialPagos", JSON.stringify(historial));
-  mostrarEmpleados();
-  mostrarHistorial();
-}
-
-
-
-async function generarPDF(id) {
-    const emp = empleados.find(e => e.id === id);
-    if (!emp) {
-      alert("Empleado no encontrado");
+    if (formaPago === "Efectivo" && vuelto > 0) {
+      ventaTemporal = { ...baseVenta, vuelto, comanda: null };
+      abrirModalVuelto(vuelto);
       return;
     }
 
-    const image = new Image();
-    image.src = "./logo.png";
-
-    image.onload = function () {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-
-      // 🎯 LOGO REDONDO
-      doc.setFillColor(255, 255, 255);
-      doc.circle(25, 25, 15, 'F'); // círculo blanco
-      doc.addImage(image, 'PNG', 10, 10, 30, 30); // logo encima
-
-      // 📌 TÍTULOS A LA DERECHA DEL LOGO
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(16);
-      doc.setTextColor(25, 40, 90);
-      doc.text("SEÑOR AREPA", 50, 18);
-
-      doc.setFontSize(12);
-      doc.setFont("Helvetica", "normal");
-      doc.text("Pago quincenal", 50, 27);
-
-      // 📆 Fecha
-      const fecha = new Date().toLocaleDateString("es-CO", {
-        year: "numeric", month: "long", day: "numeric"
-      });
-
-      doc.setFontSize(10);
-      doc.setTextColor(80);
-      doc.text(`Fecha de emisión: ${fecha}`, 200, 35, { align: "right" });
-
-      // 📊 CÁLCULOS
-      const diasFaltados = 15 - emp.diasTrabajados;
-      const totalTrabajado = emp.valorDia * emp.diasTrabajados;
-      const totalQuincena = emp.valorDia * 15;
-      const diferencia = totalQuincena - totalTrabajado;
-      const extras = (emp.horasExtras || 0) * (emp.valorHoraExtra || 0);
-      const bonificacion = emp.bonificacion || 0;
-      const totalFinal = totalTrabajado + extras + bonificacion;
-      const prestamo = emp.prestamo || 0;
-      const totalPagarConDescuento = totalFinal - prestamo;
-
-      const f = n => `$ ${n.toLocaleString('es-CO')}`; // formateador COP
-
-      // 👤 Info empleado
-      doc.autoTable({
-        startY: 40,
-        head: [['Empleado', 'Cargo', 'Estado de Pago']],
-        body: [[emp.nombre, emp.cargo, emp.estadoPago]],
-        styles: { halign: 'center', fontSize: 10 },
-        headStyles: { fillColor: [25, 40, 90], textColor: 255 },
-      });
-
-      // 📅 Asistencia
-      doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 5,
-        head: [['Días Trabajados', 'Días Faltados', 'Valor Día', 'Total Base']],
-        body: [[
-          emp.diasTrabajados,
-          diasFaltados,
-          f(emp.valorDia),
-          f(totalTrabajado)
-        ]],
-        styles: { halign: 'center', fontSize: 10 },
-        headStyles: { fillColor: [60, 90, 160], textColor: 255 },
-      });
-
-      // ⏱️ Extras y Bonos
-      doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 5,
-        head: [['Horas Extras', 'Valor Hora Extra', 'Total Extras', 'Bonificación']],
-        body: [[
-          emp.horasExtras || 0,
-          f(emp.valorHoraExtra || 0),
-          f(extras),
-          f(bonificacion)
-        ]],
-        styles: { halign: 'center', fontSize: 10 },
-        headStyles: { fillColor: [90, 120, 180], textColor: 255 },
-      });
-
-      // 💰 Totales
-      doc.autoTable({
-        startY: doc.lastAutoTable.finalY + 8,
-        head: [['Quincena Completa', 'Descuento por Faltas', 'Extras y Bonos', 'Préstamo', 'TOTAL A PAGAR']],
-        body: [[
-          f(totalQuincena),
-          `-${f(diferencia)}`,
-          `+${f(extras + bonificacion)}`,
-          `-${f(prestamo)}`,
-          f(totalPagarConDescuento)
-        ]],
-        styles: { halign: 'center', fontSize: 11 },
-        headStyles: { fillColor: [0, 150, 50], textColor: 255, fontStyle: 'bold' },
-        bodyStyles: { textColor: [0, 0, 0] },
-      });
-
-      // ✍️ Firmas
-      const firmasY = doc.lastAutoTable.finalY + 30;
-      doc.setFontSize(11);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Firma Recursos Humanos:", 20, firmasY);
-      doc.line(20, firmasY + 5, 90, firmasY + 5);
-
-      doc.text("Firma Recibe:", 120, firmasY);
-      doc.line(120, firmasY + 5, 190, firmasY + 5);
-
-      // Guardar PDF
-      doc.save(`Recibo_${emp.nombre.replace(/\s+/g, "_")}.pdf`);
-    };
-
-    image.onerror = function () {
-      alert("❌ No se pudo cargar el logo. Asegúrate de que esté junto al index.html con el nombre 'logo.png'");
-    };
+    const venta = { ...baseVenta, comanda: comandaEnEdicion ?? obtenerSiguienteComanda() };
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    ventas.push(venta);
+    localStorage.setItem("ventas", JSON.stringify(ventas));
+    comandaEnEdicion = null;
+    alert("Venta guardada exitosamente.");
+    limpiarPedido();
+    mostrarVentas();
+    const rp = document.getElementById("resumenProductos"); if (rp) rp.classList.add("hidden");
   }
 
-
-
-function guardarAsistencia() {
-  const dias = parseInt(document.getElementById("inputDias").value);
-  const horasExtras = parseInt(document.getElementById("inputHorasExtras").value) || 0;
-  const bonificacion = parseInt(limpiarNumeroCOP(document.getElementById("inputBonificacion").value)) || 0;
-  const prestamo = parseInt(limpiarNumeroCOP(document.getElementById("inputPrestamo").value)) || 0;
-
-
-  if (isNaN(dias) || dias < 0 || dias > 15) {
-    alert("Ingrese un número válido entre 0 y 15.");
-    return;
-  }
-
-  const index = empleados.findIndex(emp => emp.id === empleadoActual.id);
-  empleados[index].diasTrabajados = dias;
-  empleados[index].horasExtras = horasExtras;
-  empleados[index].bonificacion = bonificacion;
-  empleados[index].prestamo = prestamo;
-
-
-  localStorage.setItem("empleados", JSON.stringify(empleados));
-  cerrarModal();
-  mostrarEmpleados();
-}
-
-
-
-
-function cerrarModal() {
-  document.getElementById("modalAsistencia").classList.add("hidden");
-}
-
-function generarRangoQuincena(fechaPago) {
-  const ahora = new Date();
-  const mesActual = ahora.toLocaleString('es-ES', { month: 'long' });
-  const añoActual = ahora.getFullYear();
-
-  const dia = ahora.getDate();
-  const esPrimeraQuincena = dia <= 15;
-
-  // Si aún no ha sido pagado, se asigna la quincena actual
-  if (!fechaPago) {
-    return esPrimeraQuincena
-      ? `01 al 15 de ${mesActual} ${añoActual}`
-      : `16 al 30 de ${mesActual} ${añoActual}`;
-  }
-
-  // Si fue pagado, asignar la siguiente quincena
-  const fecha = new Date(fechaPago);
-  const siguiente = new Date(fecha);
-  siguiente.setDate(siguiente.getDate() + 15);
-
-  const mesSiguiente = siguiente.toLocaleString('es-ES', { month: 'long' });
-  const añoSiguiente = siguiente.getFullYear();
-  const diaSiguiente = siguiente.getDate();
-
-  return diaSiguiente <= 15
-    ? `01 al 15 de ${mesSiguiente} ${añoSiguiente}`
-    : `16 al 30 de ${mesSiguiente} ${añoSiguiente}`;
-}
-
-
-function formatearCOP(valor) {
-  return new Intl.NumberFormat("es-CO", {
-    style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0
-  }).format(valor);
-}
-
-function limpiarNumeroCOP(valor) {
-  return valor.replace(/\D/g, "");
-}
-
-function formatearInputCOP(input) {
-  const valorLimpio = limpiarNumeroCOP(input.value);
-  const valorNumerico = parseInt(valorLimpio || "0");
-  input.value = valorNumerico.toLocaleString("es-CO");
-}
-
-
-function desmarcarPagado(id) {
-  const index = empleados.findIndex(emp => emp.id === id);
-  empleados[index].estadoPago = "Pendiente";
-  empleados[index].fechaPago = null;
-  localStorage.setItem("empleados", JSON.stringify(empleados));
-  mostrarEmpleados();
-}
-
-
-function mostrarHistorial() {
-  const tbody = document.getElementById("tabla-historial");
-  if (!tbody) return;
-
-  tbody.innerHTML = "";
-
-  historial.forEach(entry => {
-    const fecha = new Date(entry.fechaPago).toLocaleDateString("es-CO");
-    const diasFaltados = 15 - entry.diasTrabajados;
-    const totalBase = entry.valorDia * entry.diasTrabajados;
-    const totalExtras = (entry.horasExtras || 0) * (entry.valorHoraExtra || 0);
-    const totalFinal = totalBase + (entry.bonificacion || 0) + totalExtras;
-
-    tbody.innerHTML += `
-      <tr>
-        <td class="p-2 border">${entry.nombre}</td>
-        <td class="p-2 border">${entry.cargo}</td>
-        <td class="p-2 border">${fecha}</td>
-        <td class="p-2 border">${entry.quincena || ""}</td>
-        <td class="p-2 border">${entry.diasTrabajados}</td>
-        <td class="p-2 border">${formatearCOP(entry.valorDia)}</td>
-        <td class="p-2 border">${entry.horasExtras || 0}</td>
-        <td class="p-2 border">${formatearCOP(entry.bonificacion || 0)}</td>
-        <td class="p-2 border font-semibold">${formatearCOP(totalFinal)}</td>
-      </tr>
-    `;
-  });
-}
-
-
-
-function eliminarHistorial() {
-  const confirmar = confirm("¿Estás seguro de que deseas eliminar todo el historial de pagos?");
-  if (!confirmar) return;
-
-  historial = [];
-  localStorage.removeItem("historialPagos");
-  mostrarHistorial();
-  alert("✅ Historial de pagos eliminado correctamente.");
-}
-
-
-async function exportarHistorialAExcel() {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Historial de Pagos");
-
-  worksheet.columns = [
-    { header: "Empleado", key: "empleado", width: 25 },
-    { header: "Cargo", key: "cargo", width: 20 },
-    { header: "Fecha", key: "fecha", width: 20 },
-    { header: "Días Trabajados", key: "diasTrabajados", width: 15 },
-    { header: "Días Faltados", key: "diasFaltados", width: 15 },
-    { header: "Valor Día", key: "valorDia", width: 15 },
-    { header: "Total Base", key: "totalBase", width: 18 },
-    { header: "Horas Extras", key: "horasExtras", width: 15 },
-    { header: "Valor Hora Extra", key: "valorHoraExtra", width: 18 },
-    { header: "Total Extras", key: "totalExtras", width: 18 },
-    { header: "Bonificación", key: "bonificacion", width: 18 },
-    { header: "Total a Pagar", key: "totalFinal", width: 20 }
-  ];
-
-  const historial = JSON.parse(localStorage.getItem("historialPagos")) || [];
-
-  historial.forEach((pago) => {
-    const diasFaltados = 15 - pago.diasTrabajados;
-    const totalBase = pago.valorDia * pago.diasTrabajados;
-    const totalExtras = (pago.horasExtras || 0) * (pago.valorHoraExtra || 0);
-    const totalFinal = totalBase + (pago.bonificacion || 0) + totalExtras;
-
-    worksheet.addRow({
-      empleado: pago.nombre,
-      cargo: pago.cargo,
-      fecha: pago.fechaPago || pago.fecha,
-      diasTrabajados: pago.diasTrabajados,
-      diasFaltados: diasFaltados,
-      valorDia: pago.valorDia,
-      totalBase: totalBase,
-      horasExtras: pago.horasExtras || 0,
-      valorHoraExtra: pago.valorHoraExtra || 0,
-      totalExtras: totalExtras,
-      bonificacion: pago.bonificacion || 0,
-      totalFinal: totalFinal
+  // --- Modal de vuelto
+  function abrirModalVuelto(vuelto) {
+    const tbody = document.getElementById("tablaVuelto");
+    tbody.innerHTML = "";
+    DENOMS.forEach(d => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="py-1">${parseInt(d,10).toLocaleString('es-CO')} COP</td>
+        <td class="py-1"><input type="number" min="0" value="0" class="p-1 border rounded w-full" data-denom="${d}"></td>`;
+      tbody.appendChild(tr);
     });
-  });
-
-  // Formato COP con separadores de miles
-  worksheet.eachRow((row, rowNumber) => {
-    if (rowNumber === 1) return; // saltar cabecera
-
-    [6, 7, 9, 10, 11, 12].forEach((col) => {
-      const cell = row.getCell(col);
-      cell.numFmt = '"$"#,##0';
+    document.getElementById("vueltoRequeridoTexto").textContent = `Vuelto requerido: $${vuelto.toLocaleString('es-CO')}`;
+    const m = document.getElementById("modalVuelto"); m.classList.remove('hidden'); m.classList.add('flex');
+  }
+  function cerrarModalVuelto() {
+    const m = document.getElementById("modalVuelto"); m.classList.add('hidden'); m.classList.remove('flex');
+    ventaTemporal = null;
+  }
+  function confirmarVuelto() {
+    if(!ventaTemporal) return alert("No hay venta en proceso.");
+    const inputs = document.querySelectorAll("#tablaVuelto input");
+    const billetesDevueltos = {};
+    let totalDevuelto = 0;
+    inputs.forEach(inp => {
+      const d = inp.dataset.denom;
+      const cant = parseInt(inp.value || "0", 10) || 0;
+      billetesDevueltos[d] = cant;
+      totalDevuelto += cant * parseInt(d, 10);
     });
-  });
-
-  const buffer = await workbook.xlsx.writeBuffer();
-  const blob = new Blob([buffer], {
-    type:
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  });
-
-  const link = document.createElement("a");
-  const fecha = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
-  link.href = URL.createObjectURL(blob);
-  link.download = `Historial_Pagos_${fecha}.xlsx`;
-  link.click();
-}
-
-// Mostrar historial de pagos en pantalla con horas extras y bonificación
-function mostrarHistorialPagos() {
-  const historial = JSON.parse(localStorage.getItem("historialPagos")) || [];
-  const contenedor = document.getElementById("historialPagos");
-  contenedor.innerHTML = "";
-
-  if (historial.length === 0) {
-    contenedor.innerHTML = "<p class='text-center text-gray-600'>No hay historial disponible.</p>";
-    return;
+    if (totalDevuelto !== ventaTemporal.vuelto) {
+      alert(`El total ingresado ($${totalDevuelto.toLocaleString('es-CO')}) no coincide con el vuelto requerido ($${ventaTemporal.vuelto.toLocaleString('es-CO')}).`);
+      return;
+    }
+    const venta = { ...ventaTemporal, billetesDevueltos, comanda: comandaEnEdicion ?? obtenerSiguienteComanda() };
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    ventas.push(venta);
+    localStorage.setItem("ventas", JSON.stringify(ventas));
+    comandaEnEdicion = null; ventaTemporal = null;
+    cerrarModalVuelto();
+    alert("Venta guardada exitosamente.");
+    limpiarPedido();
+    mostrarVentas();
+    const rp = document.getElementById("resumenProductos"); if (rp) rp.classList.add("hidden");
   }
 
-  historial.forEach((pago) => {
-    const diasFaltados = 15 - pago.diasTrabajados;
-    const totalBase = pago.valorDia * pago.diasTrabajados;
-    const totalExtras = (pago.horasExtras || 0) * (pago.valorHoraExtra || 0);
-    const totalFinal = totalBase + (pago.bonificacion || 0) + totalExtras;
+  /**********  LISTADO / ACCIONES DE VENTAS **********/
+  function mostrarVentas() {
+    const contenedor = document.getElementById("ventasGuardadas");
+    if(!contenedor) return;
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    const admin = isAdmin();
+    contenedor.innerHTML = "";
 
-    const card = document.createElement("div");
-    card.className = "bg-white shadow rounded p-4 mb-4 border border-gray-200";
-    card.innerHTML = `
-      <p><strong>Empleado:</strong> ${pago.nombre}</p>
-      <p><strong>Cargo:</strong> ${pago.cargo}</p>
-      <p><strong>Fecha de Pago:</strong> ${pago.fechaPago || pago.fecha}</p>
-      <p><strong>Días Trabajados:</strong> ${pago.diasTrabajados}</p>
-      <p><strong>Días Faltados:</strong> ${diasFaltados}</p>
-      <p><strong>Valor Día:</strong> $${pago.valorDia.toLocaleString('es-CO')}</p>
-      <p><strong>Total Base:</strong> $${totalBase.toLocaleString('es-CO')}</p>
-      <p><strong>Horas Extras:</strong> ${pago.horasExtras || 0}</p>
-      <p><strong>Valor Hora Extra:</strong> $${(pago.valorHoraExtra || 0).toLocaleString('es-CO')}</p>
-      <p><strong>Total Extras:</strong> $${totalExtras.toLocaleString('es-CO')}</p>
-      <p><strong>Bonificación:</strong> $${(pago.bonificacion || 0).toLocaleString('es-CO')}</p>
-      <p><strong>Total a Pagar:</strong> $${totalFinal.toLocaleString('es-CO')}</p>
-    `;
-    contenedor.appendChild(card);
-  });
-}
+    ventas.forEach((v, i) => {
+      const resumen = {};
+      v.pedido.forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
+      const productosResumen = Object.entries(resumen).map(([prod, cant]) => `${prod}: ${cant}`).join("<br>");
 
+      contenedor.innerHTML += `
+        <tr>
+          <td class='border p-1'>${v.comanda ?? (i + 1)}</td>
+          <td class='border p-1'>${v.fecha}</td>
+          <td class='border p-1'>${v.cliente}</td>
+          <td class='border p-1'>${v.formaPago}</td>
+          <td class='border p-1'>${v.tipoPedido}</td>
+          <td class='border p-1'>${productosResumen}</td>
+          <td class='border p-1'>$${v.total.toLocaleString('es-CO')}</td>
+          <td class='border p-1 space-x-1'>
+            <button onclick="imprimirVentaCliente(${i})" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">🧾 Cliente</button>
+            <button onclick="imprimirVentaCocina(${i})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">👨‍🍳 Cocina</button>
+            ${ admin ? `<button onclick="editarVenta(${i})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">📝 Editar</button>` : ``}
+          </td>
+        </tr>`;
+    });
+  }
 
+  function filtrarVentasPorCliente() {
+    const filtro = document.getElementById("filtroCliente").value.toLowerCase();
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    const contenedor = document.getElementById("ventasGuardadas");
+    const admin = isAdmin();
+    contenedor.innerHTML = "";
 
+    ventas.forEach((v, i) => {
+      if (!v.cliente.toLowerCase().includes(filtro)) return;
+      const resumen = {};
+      v.pedido.forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
+      const productosResumen = Object.entries(resumen).map(([prod, cant]) => `${prod}: ${cant}`).join("<br>");
 
-    window.onload = mostrarEmpleados;
-    mostrarEmpleados();
-    mostrarHistorial();
-    document.getElementById("inputBonificacion").addEventListener("input", function () {
-  formatearInputCOP(this);
-});
+      contenedor.innerHTML += `
+        <tr>
+          <td class='border p-1'>${v.comanda ?? (i + 1)}</td>
+          <td class='border p-1'>${v.fecha}</td>
+          <td class='border p-1'>${v.cliente}</td>
+          <td class='border p-1'>${v.formaPago}</td>
+          <td class='border p-1'>${v.tipoPedido}</td>
+          <td class='border p-1'>${productosResumen}</td>
+          <td class='border p-1'>$${v.total.toLocaleString('es-CO')}</td>
+          <td class='border p-1 space-x-1'>
+            <button onclick="imprimirVentaCliente(${i})" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">🧾 Cliente</button>
+            <button onclick="imprimirVentaCocina(${i})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">👨‍🍳 Cocina</button>
+            ${ admin ? `<button onclick="editarVenta(${i})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">📝 Editar</button>` : ``}
+          </td>
+        </tr>`;
+    });
+  }
 
-    document.getElementById("valorDia").addEventListener("input", function () {
-  formatearInputCOP(this);
-});
+  /**********  EXPORTAR / CIERRE / IMPRESIÓN **********/
+  async function exportarVentasExcelConEstilo(){
+    if(!isAdmin()){ alert("Solo el Administrador puede exportar a Excel."); return; }
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    if (ventas.length === 0) return alert("No hay ventas registradas.");
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Ventas del Día");
+    const headers = ["#", "Fecha", "Cliente", "Forma de Pago", "Tipo de Pedido", "Producto", "Precio (COP)", "Total Venta (COP)"];
+    sheet.addRow(headers);
+    let totalGlobal = 0; const conteoProductos = {};
+    ventas.forEach((venta, i) => {
+      const { fecha, cliente, formaPago, tipoPedido, total, pedido } = venta;
+      totalGlobal += parseFloat(total) || 0;
+      pedido.forEach(producto => {
+        sheet.addRow([venta.comanda ?? (i + 1), fecha, cliente, formaPago, tipoPedido, producto.nombre, parseFloat(producto.precio), parseFloat(total)]);
+        conteoProductos[producto.nombre] = (conteoProductos[producto.nombre] || 0) + 1;
+      });
+    });
+    sheet.getRow(1).eachCell(c => { c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1F4E78"}}; c.font={color:{argb:"FFFFFFFF"},bold:true}; c.alignment={vertical:"middle",horizontal:"center"}; c.border={top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}}; });
+    for(let r=2;r<=sheet.rowCount;r++){ const row=sheet.getRow(r); const even=r%2===0; row.eachCell(c=>{c.fill={type:"pattern",pattern:"solid",fgColor:{argb: even ? "FFF2F2F2":"FFFFFFFF"}}; c.border={top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}};}); row.getCell(7).numFmt='"$"#,##0'; row.getCell(8).numFmt='"$"#,##0';}
+    sheet.addRow([]); const totalRow = sheet.addRow(["","","","","","TOTAL DEL DÍA:","",totalGlobal]); totalRow.getCell(8).numFmt='"$"#,##0'; totalRow.font={bold:true};
+    let prodMas="", max=0; for(const [prod,c] of Object.entries(conteoProductos)){ if(c>max){max=c;prodMas=prod;} }
+    const r2 = sheet.addRow(["","","","","","Producto más vendido:","",`${prodMas} (${max})`]); r2.font={italic:true};
+    sheet.columns.forEach(col => col.width = 18);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url;
+    const d = new Date(); a.download = `Ventas_del_día_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.xlsx`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
 
-document.getElementById("inputPrestamo").addEventListener("input", function () {
-  formatearInputCOP(this);
-});
+  function cierreDeCaja(){
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    const base = getBaseCaja();
 
+    const sumRec = {}, sumDev = {}, sumNet = {}, finalCounts = {};
+    let montoRec=0, montoDev=0, montoNet=0, montoBase=0, montoFinal=0;
 
+    DENOMS.forEach(d=>{sumRec[d]=0; sumDev[d]=0; sumNet[d]=0; finalCounts[d]=0;});
 
+    ventas.forEach(v=>{
+      DENOMS.forEach(d=>{
+        sumRec[d]+= (v.billetesRecibidos?.[d]||0);
+        sumDev[d]+= (v.billetesDevueltos?.[d]||0);
+      });
+    });
+
+    DENOMS.forEach(d=>{
+      sumNet[d]= sumRec[d]-sumDev[d];
+      const baseCnt = base?.counts?.[d] || 0;
+      finalCounts[d] = baseCnt + sumNet[d];
+
+      montoRec  += sumRec[d]*parseInt(d,10);
+      montoDev  += sumDev[d]*parseInt(d,10);
+      montoNet  += sumNet[d]*parseInt(d,10);
+      montoBase += baseCnt*parseInt(d,10);
+      montoFinal+= finalCounts[d]*parseInt(d,10);
+    });
+
+    const html = `
+      <html><head><title>Cierre de Caja</title><style>
+        body { font-family: monospace; font-size: 12px; width: 76mm; padding: 10px 12px; margin: 0; }
+        h2 { text-align: center; font-size: 18px; margin: 8px 0; font-weight: bold; }
+        .line { border-top: 1px dashed #000; margin: 8px 0; }
+        table { width:100%; border-collapse: collapse; }
+        th,td{ padding:4px 2px; text-align:right; }
+        th:first-child,td:first-child{text-align:left;}
+        .totales p{ margin:3px 0; font-weight:bold; }
+        .foot{ text-align:center; margin-top:10px; }
+      </style></head><body>
+        <h2>CIERRE DE CAJA</h2>
+        <p>Fecha: ${new Date().toLocaleString()}</p>
+        <div class="line"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Denom</th>
+              <th>Base</th>
+              <th>Rec</th>
+              <th>Dev</th>
+              <th>Neto</th>
+              <th>Final</th>
+              <th>$ Final</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${DENOMS.map(d=>{
+              const baseCnt = base?.counts?.[d] || 0;
+              const rec = sumRec[d], dev = sumDev[d], net = sumNet[d], fin = finalCounts[d];
+              const montoFin = fin * parseInt(d,10);
+              return `<tr>
+                <td>${parseInt(d,10).toLocaleString('es-CO')}</td>
+                <td>${baseCnt}</td>
+                <td>${rec}</td>
+                <td>${dev}</td>
+                <td>${net}</td>
+                <td>${fin}</td>
+                <td>$${montoFin.toLocaleString('es-CO')}</td>
+              </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+        <div class="line"></div>
+        <div class="totales">
+          <p>Base de Caja: $${montoBase.toLocaleString('es-CO')} ${base ? `(${base.usuario} - ${base.hora})` : '(no registrada)'}</p>
+          <p>Efectivo Recibido Ventas: $${montoRec.toLocaleString('es-CO')}</p>
+          <p>Efectivo Devuelto: $${montoDev.toLocaleString('es-CO')}</p>
+          <p>Neto por Ventas: $${montoNet.toLocaleString('es-CO')}</p>
+          <p>Total Esperado en Caja (Base + Neto): $${montoFinal.toLocaleString('es-CO')}</p>
+        </div>
+        <div class="line"></div>
+        <p class="foot">Gracias. — Señor Arepa</p>
+        <script>window.print();<\/script>
+      </body></html>`;
+    const w = window.open("", "_blank", "width=460,height=720"); w.document.write(html); w.document.close(); w.focus();
+  }
+
+  /**********  IMPRESIONES **********/
+  function imprimirUltimaCocinero() {
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    if (ventas.length === 0) return alert("No hay ventas para imprimir.");
+    const ultimaVenta = ventas[ventas.length - 1];
+    if (!ultimaVenta.pedido || !Array.isArray(ultimaVenta.pedido)) return alert("La última venta no tiene productos válidos.");
+    const resumen = {}; ultimaVenta.pedido.forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
+    const contenido = `
+      <!DOCTYPE html><html><head><style>
+        body{font-family:monospace;font-size:15px;margin:0;padding:11px;}
+        h2{text-align:center;font-size:19px;margin-bottom:11px;}
+        .info{margin-bottom:10px;} .info p{margin:2px 0;}
+        ul{list-style:none;padding:0;margin:0;} li{padding:4px 0;border-bottom:2px dashed #000;font-size:19px;}
+      </style></head><body>
+        <h2>🧾 PEDIDO A COCINA</h2>
+        <div class="info">
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${ultimaVenta.comanda ?? ventas.length}</p>
+          <p><strong>Cliente:</strong> ${ultimaVenta.cliente || "Sin nombre"}</p>
+          <p><strong>Hora:</strong> ${ultimaVenta.fecha || "Sin hora"}</p>
+          <p><strong>Tipo de Pedido:</strong> ${ultimaVenta.tipoPedido || "-"}</p>
+          ${ultimaVenta.observaciones ? `<p><strong>Observaciones:</strong> ${ultimaVenta.observaciones}</p>` : ""}
+        </div>
+        <ul>${Object.entries(resumen).map(([producto, cantidad]) => `<li>${producto} x${cantidad}</li>`).join("")}</ul>
+        <p style="text-align:center;margin-top:10px;">👨‍🍳 Preparar con cuidado</p>
+        <script>window.print();<\/script>
+      </body></html>`;
+    const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+  }
+
+  function imprimirUltimaCliente() {
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    if (ventas.length === 0) return alert("No hay ventas para imprimir.");
+    const v = ventas[ventas.length - 1]; const obs = v.observaciones || "";
+    let contenido = `
+      <html><head><title>Recibo Cliente</title><style>
+        body{font-family:monospace;font-size:14px;width:58mm;padding:10px 12px;margin:0;line-height:1.5;}
+        h2{text-align:center;font-size:19px;margin:14px 0 5px;font-weight:bold;}
+        .sub-info{text-align:center;font-size:12px;margin-bottom:10px;line-height:1.3;}
+        .line{border-top:1px dashed #000;margin:9px 0;} ul{list-style:none;padding:0;margin:0;} li{margin-bottom:7px;}
+        .total{text-align:right;font-weight:bold;margin-top:14px;font-size:16px;} .info p{margin:6px 0;} .info strong{font-weight:bold;}
+        p.thanks{text-align:center;margin-top:22px;font-weight:bold;font-size:15px;}
+      </style></head><body>
+        <h2>SEÑOR AREPA</h2>
+        <div class="sub-info">Matrícula No 289546<br>CALLE 19#25-03 ESQUINA<br>BARRIO SAN JOSÉ, ARMENIA</div>
+        <div class="line"></div>
+        <div class="info">
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? ventas.length}</p>
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? ventas.length}</p>
+          <p><strong>Cliente:</strong> ${v.cliente || "N/A"}</p>
+          <p><strong>Fecha:</strong> ${v.fecha}</p>
+          <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
+          ${obs ? `<p><strong>Observaciones:</strong> ${obs}</p>` : ""}
+        </div>
+        <div class="line"></div>
+        <ul>${v.pedido.map(p => `<li>${p.nombre} - $${p.precio}</li>`).join("")}</ul>
+        <div class="line"></div>
+        <p class="total">Total: $${v.total.toLocaleString('es-CO')}</p>
+        <div class="line"></div>
+        <p class="thanks">¡Gracias por su compra!</p>
+        <script>window.print();<\/script>
+      </body></html>`;
+    const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+  }
+
+  // Reimpresión por fila — PERMITIDA para cajero y admin (sin editar)
+  function imprimirVentaCliente(index){
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || []; const v = ventas[index]; if (!v) return alert("Venta no encontrada.");
+    let contenido = `
+      <html><head><title>Recibo Cliente</title><style>
+        body{font-family:monospace;font-size:14px;width:58mm;padding:10px 12px;margin:0;line-height:1.5;}
+        h2{text-align:center;font-size:19px;margin:14px 0;font-weight:bold;}
+        .line{border-top:1px dashed #000;margin:9px 0;} ul{list-style:none;padding:0;margin:0;} li{margin-bottom:7px;}
+        .total{text-align:right;font-weight:bold;margin-top:14px;font-size:16px;} .info p{margin:6px 0;} .info strong{font-weight:bold;}
+        p.thanks{text-align:center;margin-top:22px;font-weight:bold;font-size:15px;}
+      </style></head><body>
+        <h2>SEÑOR AREPA</h2>
+        <div class="line"></div>
+        <div class="info">
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? (index + 1)}</p>
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? (index + 1)}</p>
+          <p><strong>Cliente:</strong> ${v.cliente || "N/A"}</p>
+          <p><strong>Fecha:</strong> ${v.fecha}</p>
+          <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
+          ${v.observaciones ? `<p><strong>Observaciones:</strong> ${v.observaciones}</p>` : ""}
+        </div>
+        <div class="line"></div>
+        <ul>${v.pedido.map(p => `<li>${p.nombre} - $${p.precio}</li>`).join("")}</ul>
+        <div class="line"></div>
+        <p class="total">Total: $${v.total.toLocaleString('es-CO')}</p>
+        <div class="line"></div>
+        <p class="thanks">¡Gracias por su compra!</p>
+        <script>window.print();<\/script>
+      </body></html>`;
+    const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+  }
+  function imprimirVentaCocina(index){
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || []; const v = ventas[index]; if (!v) return alert("Venta no encontrada.");
+    const resumen = {}; v.pedido.forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
+    const contenido = `
+      <html><head><title>Pedido Cocina</title><style>
+        body{font-family:monospace;font-size:15px;margin:0;padding:11px;}
+        h2{text-align:center;font-size:19px;margin-bottom:11px;}
+        .info{margin-bottom:10px;} .info p{margin:2px 0;}
+        ul{list-style:none;padding:0;margin:0;} li{padding:4px 0;border-bottom:2px dashed #000;font-size:19px;}
+      </style></head><body>
+        <h2>🧾 PEDIDO A COCINA</h2>
+        <div class="info">
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? (index + 1)}</p>
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? (index + 1)}</p>
+          <p><strong>Cliente:</strong> ${v.cliente || "Sin nombre"}</p>
+          <p><strong>Hora:</strong> ${v.fecha || "Sin hora"}</p>
+          <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
+          ${v.observaciones ? `<p><strong>Observaciones:</strong> ${v.observaciones}</p>` : ""}
+        </div>
+        <ul>${Object.entries(resumen).map(([producto, cantidad]) => `<li>${producto} x${cantidad}</li>`).join("")}</ul>
+        <p style="text-align:center;margin-top:10px;">👨‍🍳 Preparar con cuidado</p>
+        <script>window.print();<\/script>
+      </body></html>`;
+    const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+  }
+
+  function editarVenta(index) {
+    if(!isAdmin()){ alert("Solo el Administrador puede editar ventas."); return; }
+    const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    const venta = ventas[index];
+    if (!venta) return alert("Venta no encontrada.");
+    document.getElementById("cliente").value = venta.cliente;
+    document.getElementById("formaPago").value = venta.formaPago;
+    document.getElementById("tipoPedido").value = venta.tipoPedido;
+    document.getElementById("observaciones").value = venta.observaciones || "";
+    pedido = [...venta.pedido]; total = venta.total; actualizarVistaPedido();
+    comandaEnEdicion = venta.comanda ?? null;
+    ventas.splice(index, 1); localStorage.setItem("ventas", JSON.stringify(ventas));
+    mostrarVentas();
+    alert("Venta cargada para edición. Haz los cambios y presiona 'Guardar Venta'.");
+  }
+
+  /**********  COMANDAS **********/
+  function obtenerSiguienteComanda() {
+    const key = "ultimoNumeroComanda";
+    const ultimo = parseInt(localStorage.getItem(key) || "0", 10);
+    const siguiente = ultimo + 1;
+    localStorage.setItem(key, String(siguiente));
+    return siguiente;
+  }
+
+  /**********  INIT **********/
+  window.onload = function(){
+    ensureUsersInit();
+    const user = getSessionUser();
+    if(!user) showLoginModal(); else hideLoginModal();
+    applyRoleUI();
+    renderUsersTable();
+    mostrarVentas();
+    if(user) autoPromptBaseIfMissing(); // si ya hay sesión activa al recargar
+  }
   </script>
 </body>
 </html>
