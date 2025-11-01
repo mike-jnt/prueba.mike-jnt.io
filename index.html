@@ -7,6 +7,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <style>
+    /* Fix modal scroll on small screens */
+    .modal-max-h { max-height: 85vh; }
+  </style>
 </head>
 
 <body class="bg-yellow-50 font-sans">
@@ -14,13 +18,9 @@
   <!-- Navegación -->
   <nav class="bg-yellow-400 p-4 flex justify-between items-center text-white font-bold text-lg">
     <div class="flex items-center space-x-2">
-      <!-- Fallback: si no existe la imagen, se oculta -->
-      <img src="imagenes/senora.png"
-           alt="Logo Señor Arepa"
-           class="w-20 h-20 rounded-full"
-           onerror="this.style.display='none';document.getElementById('brandTxt').classList.remove('hidden');">
-      <span id="brandTxt" class="text-xl hidden">SEÑOR AREPA</span>
-      <span class="text-xl md:hidden">SEÑOR AREPA</span>
+      <!-- Ajusta esta ruta/archivo real en tu hosting -->
+      <img src="imagenes/senora.png" alt="Logo Señor Arepa" class="w-20 h-20 rounded-full" onerror="this.style.display='none'">
+      <span class="text-xl">SEÑOR AREPA</span>
     </div>
     <div class="flex items-center gap-3">
       <a href="finanzas1.html" class="bg-white text-yellow-700 font-semibold px-3 py-1 rounded-lg shadow hover:bg-yellow-100 transition" target="_blank">
@@ -35,7 +35,7 @@
     </div>
   </nav>
 
-  <!-- Sección Productos -->
+  <!-- Sección Productos (idéntica a la tuya) -->
   <main class="p-6">
     <h2 class="text-2xl font-bold text-gray-700 mb-4">Menú</h2>
     <div id="productos" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -122,23 +122,17 @@
     </div>
 
     <!-- Cliente y forma de pago -->
-    <div class="mt-4 flex flex-col md:flex-row gap-4 items-start md:items-end">
+    <div class="mt-4 flex flex-col md:flex-row gap-4">
       <input type="text" id="cliente" placeholder="Nombre del Cliente" class="flex-1 p-2 border border-yellow-300 rounded" />
       <input type="text" id="observaciones" placeholder="Observaciones (Ej: Sin cebolla, agregar salsas, etc.)" class="flex-1 p-2 border border-yellow-300 rounded" />
-
-      <div class="flex gap-2 items-center">
-        <select id="formaPago" class="p-2 border border-yellow-300 rounded" onchange="onCambioFormaPago()">
-          <option value="">Seleccione forma de pago</option>
-          <option value="Efectivo">Efectivo</option>
-          <option value="QR Señora Arepa">QR Señora Arepa</option>
-          <option value="QR Señor Arepa">QR Señor Arepa</option>
-          <option value="Nequi">Nequi</option>
-          <option value="Daviplata">Daviplata</option>
-        </select>
-        <button id="btnAbrirEfectivo" onclick="abrirModalEfectivo()" class="hidden bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded">
-          💵 Efectivo
-        </button>
-      </div>
+      <select id="formaPago" class="flex-1 p-2 border border-yellow-300 rounded" onchange="toggleEfectivoSection()">
+        <option value="">Seleccione forma de pago</option>
+        <option value="Efectivo">Efectivo</option>
+        <option value="QR Señor Arepa">QR Señor Arepa</option>
+        <option value="QR Señora Arepa">QR Señora Arepa</option>
+        <option value="Nequi">Nequi</option>
+        <option value="Daviplata">Daviplata</option>
+      </select>
     </div>
 
     <!-- Tipo de pedido -->
@@ -152,13 +146,22 @@
       </select>
     </div>
 
+    <!-- Efectivo recibido (modal-like panel abrible) -->
+    <div id="efectivoSection" class="mt-6 bg-white p-4 rounded-xl shadow-md hidden">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold mb-2">💵 Efectivo recibido</h3>
+        <button type="button" class="text-sm underline" onclick="abrirModalEfectivo()">Abrir / Rectificar</button>
+      </div>
+      <p id="ef_total" class="mt-2 text-sm text-gray-600"></p>
+    </div>
+
     <!-- Botones de acción -->
     <div class="mt-6 flex flex-wrap gap-2">
       <button id="btnGuardarVenta" onclick="guardarVenta()" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">💾 Guardar Venta</button>
       <button id="btnImprimirCocina" onclick="imprimirUltimaCocinero()" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">🖨️ Imprimir para Cocina</button>
       <button id="btnImprimirCliente" onclick="imprimirUltimaCliente()" class="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded">🧾 Imprimir Recibo Cliente</button>
-      <button id="btnComprasPagos" onclick="abrirModalGasto()" class="bg-rose-600 hover:bg-rose-700 text-white p-2 rounded">🧾 Compras / Pagos</button>
       <button id="btnBaseCaja" onclick="abrirModalBaseCaja()" class="bg-teal-600 hover:bg-teal-700 text-white p-2 rounded">📦 Base de Caja</button>
+      <button id="btnComprasPagos" onclick="abrirModalGasto()" class="bg-rose-600 hover:bg-rose-700 text-white p-2 rounded">🧾 Compras / Pagos</button>
       <button id="btnExportarExcel" onclick="exportarVentasExcelConEstilo()" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded">📊 Exportar Ventas a Excel</button>
       <button id="btnBorrarVentas" onclick="borrarVentas()" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded">🗑️ Borrar Ventas</button>
       <button id="btnResumenProductos" onclick="generarResumenProductos()" class="bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded">📊 Ver Resumen Productos</button>
@@ -219,42 +222,42 @@
     </div>
   </main>
 
-  <!-- MODAL: Efectivo recibido -->
+  <!-- MODAL: Efectivo Recibido (igual estilo base caja) -->
   <div id="modalEfectivo" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
       <div class="w-full md:w-1/3 bg-yellow-50 p-6 flex flex-col justify-between border-r border-gray-200">
         <div>
-          <h2 class="text-2xl font-bold text-yellow-700 mb-2">💵 Efectivo Recibido</h2>
-          <p class="text-sm text-gray-600 mb-4">Presiona un botón para sumar un billete; “➖” para restar.</p>
+          <h2 class="text-2xl font-bold text-yellow-700 mb-2">💵 Efectivo recibido</h2>
+          <p class="text-sm text-gray-600 mb-4">Suma los billetes que el cliente entrega.</p>
           <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2 shadow">
             <span class="text-sm font-medium">Total ingresado</span>
-            <span id="efTotalValor" class="text-xl font-bold text-yellow-800">$0</span>
+            <span id="efModalTotal" class="text-xl font-bold text-yellow-800">$0</span>
           </div>
-          <p class="text-xs text-gray-500 mt-3">Puedes abrir y corregir las veces que quieras.</p>
         </div>
         <div class="mt-4">
           <div class="flex gap-2 justify-end mt-4">
-            <button onclick="confirmarEfectivoRecibido()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded shadow">Guardar</button>
+            <button onclick="confirmarEfectivoModal()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded shadow">Guardar</button>
             <button onclick="cerrarModalEfectivo()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded shadow">Cerrar</button>
           </div>
+          <p class="text-xs text-gray-500 mt-3">Este total se usa para calcular el vuelto.</p>
         </div>
       </div>
-      <div class="w-full md:w-2/3 bg-white p-4 overflow-y-auto max-h-[80vh]">
-        <div id="efDenomsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
+      <div class="w-full md:w-2/3 bg-white p-4 overflow-y-auto modal-max-h">
+        <div id="efModalDenoms" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: Vuelto -->
+  <!-- MODAL: Registrar Vuelto (mismo estilo) -->
   <div id="modalVuelto" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
       <div class="w-full md:w-1/3 bg-yellow-50 p-6 flex flex-col justify-between border-r border-gray-200">
         <div>
-          <h2 class="text-2xl font-bold text-yellow-700 mb-2">💸 Vuelto</h2>
-          <p id="vueltoRequeridoTexto" class="text-sm text-gray-700 mb-3"></p>
+          <h2 class="text-2xl font-bold text-yellow-700 mb-2">🧮 Vuelto</h2>
+          <p id="vueltoRequeridoTexto" class="text-sm text-gray-700 mb-4"></p>
           <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2 shadow">
             <span class="text-sm font-medium">Total devuelto</span>
-            <span id="vuTotalValor" class="text-xl font-bold text-yellow-800">$0</span>
+            <span id="vueltoModalTotal" class="text-xl font-bold text-yellow-800">$0</span>
           </div>
         </div>
         <div class="mt-4">
@@ -262,10 +265,11 @@
             <button onclick="confirmarVuelto()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded shadow">Confirmar</button>
             <button onclick="cerrarModalVuelto()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded shadow">Cerrar</button>
           </div>
+          <p class="text-xs text-gray-500 mt-3">El total devuelto debe coincidir con el requerido.</p>
         </div>
       </div>
-      <div class="w-full md:w-2/3 bg-white p-4 overflow-y-auto max-h-[80vh]">
-        <div id="vuDenomsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
+      <div class="w-full md:w-2/3 bg-white p-4 overflow-y-auto modal-max-h">
+        <div id="vueltoDenoms" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
       </div>
     </div>
   </div>
@@ -291,8 +295,37 @@
           <p id="baseMetaInfo" class="text-xs text-gray-500 mt-3"></p>
         </div>
       </div>
-      <div class="w-full md:w-2/3 bg-white p-4 overflow-y-auto max-h-[80vh]">
+      <div class="w-full md:w-2/3 bg-white p-4 overflow-y-auto modal-max-h">
         <div id="baseDenomsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Compras / Pagos -->
+  <div id="modalGasto" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
+      <div class="w-full md:w-1/3 bg-rose-50 p-6 flex flex-col justify-between border-r border-gray-200">
+        <div>
+          <h2 class="text-2xl font-bold text-rose-700 mb-2">🧾 Compras / Pagos</h2>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Concepto</label>
+          <input id="gastoConcepto" class="w-full p-2 border rounded mb-3" placeholder="Proveedor / Detalle" />
+          <label class="block text-sm font-medium text-gray-700 mb-1">Total del gasto</label>
+          <input id="gastoTotal" type="number" class="w-full p-2 border rounded mb-3" placeholder="0" />
+          <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2 shadow">
+            <span class="text-sm font-medium">Entregado en efectivo</span>
+            <span id="gastoEfTotal" class="text-xl font-bold text-rose-800">$0</span>
+          </div>
+        </div>
+        <div class="mt-4">
+          <div class="flex gap-2 justify-end mt-4">
+            <button onclick="confirmarGasto()" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded shadow">Guardar</button>
+            <button onclick="cerrarModalGasto()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded shadow">Cerrar</button>
+          </div>
+          <p class="text-xs text-gray-500 mt-3">Se descontará de la base de caja y quedará en el historial.</p>
+        </div>
+      </div>
+      <div class="w-full md:w-2/3 bg-white p-4 overflow-y-auto modal-max-h">
+        <div id="gastoDenoms" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
       </div>
     </div>
   </div>
@@ -306,1017 +339,1003 @@
         <input id="loginPass" type="password" class="p-2 border rounded w-full" placeholder="Contraseña" required>
         <button class="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded">Entrar</button>
       </form>
-      <p class="text-xs text-gray-500 mt-3">Primer uso: admin / admin123</p>
+      <p class="text-xs text-gray-500 mt-3">Usuarios: admin/admin123 · cajero/cajero123</p>
     </div>
   </div>
 
-  <!-- MODAL: Compras / Pagos (gastos) -->
-  <div id="modalGasto" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
-    <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
-      <div class="w-full md:w-1/3 bg-rose-50 p-6 flex flex-col justify-between border-r border-gray-200">
-        <div>
-          <h2 class="text-2xl font-bold text-rose-700 mb-2">🧾 Compras / Pagos</h2>
-          <label class="text-sm font-medium text-gray-700">Proveedor / Descripción</label>
-          <input id="gastoDescripcion" class="w-full p-2 border rounded mb-3" placeholder="Ej. Compra queso / Proveedor X">
-          <label class="text-sm font-medium text-gray-700">Total del gasto</label>
-          <input id="gastoTotal" type="number" min="0" class="w-full p-2 border rounded mb-3" placeholder="Valor en COP">
-          <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2 shadow">
-            <span class="text-sm font-medium">Pagado en efectivo</span>
-            <span id="gastoEfTotal" class="text-xl font-bold text-rose-800">$0</span>
-          </div>
-          <p class="text-xs text-gray-500 mt-3">El efectivo pagado se descuenta de la Base de Caja.</p>
-        </div>
-        <div class="mt-4">
-          <div class="flex gap-2 justify-end mt-4">
-            <button onclick="confirmarGasto()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded shadow">Guardar</button>
-            <button onclick="cerrarModalGasto()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded shadow">Cerrar</button>
-          </div>
-        </div>
-      </div>
-      <div class="w-full md:w-2/3 bg-white p-4 overflow-y-auto max-h-[80vh]">
-        <div id="gastoDenomsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- =================== App (UN SOLO MÓDULO) =================== -->
+  <!-- APP SCRIPT -->
   <script type="module">
-    // Firebase v10 (Firestore con caché local moderna)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import {
-      initializeFirestore, persistentLocalCache,
-      collection, doc, getDoc, getDocs, setDoc, addDoc,
-      query, where, serverTimestamp
-    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+  /**********  Firebase SDK v10 (modular)  **********/
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import {
+    getFirestore, collection, addDoc, getDocs, query, where, orderBy,
+    serverTimestamp, enableIndexedDbPersistence
+  } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDwCV5NmixGyEZ_bdAMTU5wqDua_BbANSo",
-      authDomain: "senorarepa-689cc.firebaseapp.com",
-      projectId: "senorarepa-689cc",
-      storageBucket: "senorarepa-689cc.firebasestorage.app",
-      messagingSenderId: "499118544254",
-      appId: "1:499118544254:web:cdf7b22c12bb760d184f2f"
-    };
+  // Tu configuración
+  const firebaseConfig = {
+    apiKey: "AIzaSyDwCV5NmixGyEZ_bdAMTU5wqDua_BbANSo",
+    authDomain: "senorarepa-689cc.firebaseapp.com",
+    projectId: "senorarepa-689cc",
+    storageBucket: "senorarepa-689cc.firebasestorage.app",
+    messagingSenderId: "499118544254",
+    appId: "1:499118544254:web:cdf7b22c12bb760d184f2f"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db  = initializeFirestore(app, { localCache: persistentLocalCache() });
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-    /**********  CONSTANTES & ESTADO  **********/
-    const DENOMS = ["100000","50000","20000","10000","5000","2000","1000","500","200","100","50","20"];
-    let pedido = [];
-    let total = 0;
-    let comandaEnEdicion = null;
-    let ventaTemporal = null;
-    const BUSINESS_ID = "arepa-main";
+  // Cache (opcional)
+  try { enableIndexedDbPersistence(db); } catch(e) { console.warn('Persistencia no disponible:', e?.message); }
 
-    const baseCounts  = {};
-    const efCounts    = {};
-    const vuCounts    = {};
-    const gastoCounts = {};
+  /**********  CONSTANTES & ESTADO  **********/
+  const DENOMS = ["100000","50000","20000","10000","5000","2000","1000","500","200","100","50","20"];
+  let pedido = [];
+  let total = 0;
+  let comandaEnEdicion = null;
+  let ventaTemporal = null;
 
-    /**********  FIRESTORE HELPERS (sin Auth)  **********/
-    async function seedDefaultUsers() {
-      try{
-        const usersRef = collection(db, "appUsers");
-        const qAdmin  = query(usersRef, where("username","==","admin"));
-        const qCajero = query(usersRef, where("username","==","cajero"));
-        const [s1, s2] = await Promise.all([getDocs(qAdmin), getDocs(qCajero)]);
-        const ops = [];
-        if (s1.empty) {
-          ops.push(addDoc(usersRef, { username:"admin", password:"admin123", role:"admin", businessId:BUSINESS_ID, createdAt:serverTimestamp() }));
-        }
-        if (s2.empty) {
-          ops.push(addDoc(usersRef, { username:"cajero", password:"cajero123", role:"cajero", businessId:BUSINESS_ID, createdAt:serverTimestamp() }));
-        }
-        if (ops.length) await Promise.all(ops);
-      }catch(e){ console.warn("seed users skip:", e); }
+  // Usuarios "sin auth" (semilla local); todos comparten el mismo businessId por defecto
+  const DEFAULT_BUSINESS = 'SENOR-AREPA-DEFAULT';
+  const USERS_SEMILLA = [
+    { username: 'admin',  password: 'admin123',  role: 'admin',  businessId: DEFAULT_BUSINESS },
+    { username: 'cajero', password: 'cajero123', role: 'cajero', businessId: DEFAULT_BUSINESS },
+  ];
+
+  /**********  HELPERS de negocio/usuario (evita undefined en where) **********/
+  const LS_KEYS = { BUSINESS_ID: 'businessId', SESSION_USER: 'sessionUser', USERS: 'users' };
+
+  function getOrInitBusinessId() {
+    let bid = localStorage.getItem(LS_KEYS.BUSINESS_ID);
+    if (!bid || typeof bid !== 'string' || !bid.trim()) {
+      bid = DEFAULT_BUSINESS;
+      localStorage.setItem(LS_KEYS.BUSINESS_ID, bid);
     }
-    async function findUserByCredentials(username, password) {
-      try{
-        const usersRef = collection(db, "appUsers");
-        const qy = query(usersRef, where("username","==", username));
-        const snap = await getDocs(qy);
-        if (snap.empty) return null;
-        const d = snap.docs[0];
-        const data = d.data();
-        if (data.password !== password) return null;
-        return { id:d.id, ...data };
-      }catch(e){ console.warn("find user err:", e); return null; }
-    }
+    return bid;
+  }
+  function setBusinessFromUser(userDoc) {
+    const bid = (userDoc?.businessId || '').trim();
+    if (bid) localStorage.setItem(LS_KEYS.BUSINESS_ID, bid);
+  }
+  function getSessionUser() {
+    try { return JSON.parse(localStorage.getItem(LS_KEYS.SESSION_USER) || 'null'); }
+    catch { return null; }
+  }
+  function setSessionUser(u) {
+    localStorage.setItem(LS_KEYS.SESSION_USER, JSON.stringify(u || null));
+    if (u?.businessId) setBusinessFromUser(u);
+  }
 
-    function setSessionUser(user){ localStorage.setItem('sessionUser', JSON.stringify(user)); }
-    function getSessionUser(){ return JSON.parse(localStorage.getItem('sessionUser') || 'null'); }
-    function isAdmin(){ return getSessionUser()?.role === 'admin'; }
+  /**********  AUTH & ROLES (sin Firebase Auth)  **********/
+  function ensureUsersInit() {
+    const users = JSON.parse(localStorage.getItem(LS_KEYS.USERS) || '[]');
+    if (users.length === 0) localStorage.setItem(LS_KEYS.USERS, JSON.stringify(USERS_SEMILLA));
+  }
+  function getUsers(){ return JSON.parse(localStorage.getItem(LS_KEYS.USERS) || '[]'); }
+  function setUsers(arr){ localStorage.setItem(LS_KEYS.USERS, JSON.stringify(arr)); renderUsersTable(); }
+  function isAdmin(){ return getSessionUser()?.role === 'admin'; }
 
-    async function guardarVentaEnFirestore(venta) {
-      try{
-        const s = getSessionUser();
-        const payload = { ...venta, businessId:s?.businessId||BUSINESS_ID, cashier:s?.username||"N/A", createdAt:serverTimestamp() };
-        await addDoc(collection(db,"ventas"), payload);
-        await addDoc(collection(db,"movimientos"), { tipo:"venta", monto:venta.total, notas:`Venta #${venta.comanda}`, businessId:s?.businessId||BUSINESS_ID, cashier:s?.username||"N/A", createdAt:serverTimestamp() });
-      }catch(e){ console.warn("save venta cloud err:", e); }
-    }
-    async function guardarGastoEnFirestore(gasto) {
-      try{
-        const s = getSessionUser();
-        const payload = { ...gasto, businessId:s?.businessId||BUSINESS_ID, cashier:s?.username||"N/A", createdAt:serverTimestamp() };
-        await addDoc(collection(db,"gastos"), payload);
-        await addDoc(collection(db,"movimientos"), { tipo:"gasto", monto:gasto.total, notas:gasto.descripcion, businessId:s?.businessId||BUSINESS_ID, cashier:s?.username||"N/A", createdAt:serverTimestamp() });
-      }catch(e){ console.warn("save gasto cloud err:", e); }
-    }
-    async function guardarBaseEnFirestore(base) {
-      try{
-        const s = getSessionUser();
-        const payload = { ...base, businessId:s?.businessId||BUSINESS_ID, cashier:s?.username||"N/A", updatedAt:serverTimestamp() };
-        await addDoc(collection(db,"bases"), payload);
-      }catch(e){ console.warn("save base cloud err:", e); }
-    }
-    async function cargarTodoDesdeFirestore(businessId) {
-      try{
-        const ventasQ = query(collection(db,"ventas"), where("businessId","==", businessId));
-        const gastosQ = query(collection(db,"gastos"), where("businessId","==", businessId));
-        const basesQ  = query(collection(db,"bases"),  where("businessId","==", businessId));
-        const movQ    = query(collection(db,"movimientos"), where("businessId","==", businessId));
-        const [vS,gS,bS,mS] = await Promise.all([getDocs(ventasQ),getDocs(gastosQ),getDocs(basesQ),getDocs(movQ)]);
-        const ventas = vS.docs.map(d=>({id:d.id, ...d.data()}));
-        const gastos = gS.docs.map(d=>({id:d.id, ...d.data()}));
-        const bases  = bS.docs.map(d=>({id:d.id, ...d.data()}));
-        const movs   = mS.docs.map(d=>({id:d.id, ...d.data()}));
-        localStorage.setItem("ventas", JSON.stringify(ventas));
-        localStorage.setItem("gastos", JSON.stringify(gastos));
-        localStorage.setItem("baseCajaRemote", JSON.stringify(bases));
-        localStorage.setItem("movimientos", JSON.stringify(movs));
-        mostrarVentas();
-      }catch(e){ console.warn("Fallo lectura Firestore, uso LocalStorage:", e); }
-    }
+  function showLoginModal(){ const m = document.getElementById('loginModal'); m.classList.remove('hidden'); m.classList.add('flex'); }
+  function hideLoginModal(){ const m = document.getElementById('loginModal'); m.classList.add('hidden'); m.classList.remove('flex'); }
 
-    /**********  AUTH & ROLES (localStorage + Firestore)  **********/
-    function ensureUsersInitLocal() {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      if (users.length === 0) {
-        const defaultAdmin = { username: 'admin', role: 'admin', password: 'admin123' };
-        const defaultCaj   = { username: 'cajero', role: 'cajero', password: 'cajero123' };
-        localStorage.setItem('users', JSON.stringify([defaultAdmin, defaultCaj]));
-      }
-    }
-    function getUsers(){ return JSON.parse(localStorage.getItem('users') || '[]'); }
-    function setUsers(arr){ localStorage.setItem('users', JSON.stringify(arr)); renderUsersTable(); }
+  window.loginFromModal = function(e){
+    e.preventDefault();
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value;
+    const users = getUsers();
+    const found = users.find(x => x.username === u && x.password === p);
+    if(!found){ alert("Usuario o contraseña incorrectos."); return false; }
+    setSessionUser({ username: found.username, role: found.role, businessId: found.businessId });
+    hideLoginModal();
+    applyRoleUI();
+    mostrarVentas();
+    autoPromptBaseIfMissing();
+    return false;
+  };
+  window.logout = function(){
+    localStorage.removeItem(LS_KEYS.SESSION_USER);
+    applyRoleUI();
+    showLoginModal();
+  };
 
-    function showLoginModal(){ const m = document.getElementById('loginModal'); m.classList.remove('hidden'); m.classList.add('flex'); }
-    function hideLoginModal(){ const m = document.getElementById('loginModal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+  window.addUserFromForm = function(e){
+    e.preventDefault();
+    if(!isAdmin()){ alert("Solo el Administrador puede gestionar usuarios."); return false; }
+    const username = document.getElementById('newUsername').value.trim();
+    const password = document.getElementById('newPassword').value;
+    const role     = document.getElementById('newRole').value;
+    if(!username || !password) { alert("Usuario y contraseña requeridos."); return false; }
+    const users = getUsers();
+    if(users.find(u => u.username === username)){ alert("Ese usuario ya existe."); return false; }
+    users.push({ username, role, password, businessId: getOrInitBusinessId() });
+    setUsers(users);
+    document.getElementById('newUsername').value = "";
+    document.getElementById('newPassword').value = "";
+    document.getElementById('newRole').value = "cajero";
+    alert("Usuario agregado.");
+    return false;
+  };
+  window.deleteUser = function(username){
+    if(!isAdmin()){ alert("Solo el Administrador puede eliminar usuarios."); return; }
+    const users = getUsers();
+    const me = getSessionUser();
+    if(me && me.username === username){ alert("No puedes eliminar tu propia cuenta mientras estás conectado."); return; }
+    const admins = users.filter(u => u.role === 'admin');
+    const target = users.find(u => u.username === username);
+    if(target?.role === 'admin' && admins.length <= 1){ alert("Debe existir al menos un administrador."); return; }
+    const filtered = users.filter(u => u.username !== username);
+    setUsers(filtered);
+    alert("Usuario eliminado.");
+  };
+  function renderUsersTable(){
+    const tbody = document.getElementById('usuariosTbody');
+    if(!tbody) return;
+    const users = getUsers();
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td class="p-2 border">${u.username}</td>
+        <td class="p-2 border">${u.role}</td>
+        <td class="p-2 border">
+          <button onclick="deleteUser('${u.username.replace(/'/g,"\\'")}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">Eliminar</button>
+        </td>
+      </tr>
+    `).join("");
+  }
 
-    async function loginFromModal(e){
-      e.preventDefault();
-      const u = document.getElementById('loginUser').value.trim();
-      const p = document.getElementById('loginPass').value;
+  function toggleDisplay(id, show){
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(show) el.classList.remove('hidden');
+    else el.classList.add('hidden');
+  }
 
-      try {
-        await seedDefaultUsers();
-        const profile = await findUserByCredentials(u, p);
-        if (!profile) { alert("Usuario o contraseña incorrectos."); return false; }
+  function applyRoleUI(){
+    const badge = document.getElementById('currentUserBadge');
+    const baseBadge = document.getElementById('baseBadge');
+    const btnLogout = document.getElementById('btnLogout');
+    const user = getSessionUser();
 
-        setSessionUser({ username: profile.username, role: profile.role, businessId: profile.businessId, uid: profile.id });
-        hideLoginModal();
-        applyRoleUI();
-        await cargarTodoDesdeFirestore(profile.businessId);
-        autoPromptBaseIfMissing();
-        return false;
-      } catch (err) {
-        console.error("Login error:", err);
-        alert("No se pudo iniciar sesión. Revisa conexión/reglas.");
-        return false;
-      }
-    }
-    function logout(){
-      localStorage.removeItem('sessionUser');
-      applyRoleUI();
-      showLoginModal();
-    }
-
-    async function addUserFromForm(e){
-      e.preventDefault();
-      if(!isAdmin()){ alert("Solo el Administrador puede gestionar usuarios."); return false; }
-      const username = document.getElementById('newUsername').value.trim();
-      const password = document.getElementById('newPassword').value;
-      const role     = document.getElementById('newRole').value;
-      if(!username || !password) { alert("Usuario y contraseña requeridos."); return false; }
-
-      try{
-        await addDoc(collection(db,"appUsers"), { username, password, role, businessId: BUSINESS_ID, createdAt: serverTimestamp() });
-      }catch(e){ console.warn("No se pudo crear usuario en Firestore:", e); }
-
-      const users = getUsers();
-      users.push({ username, role, password });
-      setUsers(users);
-
-      document.getElementById('newUsername').value = "";
-      document.getElementById('newPassword').value = "";
-      document.getElementById('newRole').value = "cajero";
-      alert("Usuario agregado.");
-      return false;
-    }
-    function deleteUser(username){
-      if(!isAdmin()){ alert("Solo el Administrador puede eliminar usuarios."); return; }
-      const users = getUsers();
-      const me = getSessionUser();
-      if(me && me.username === username){ alert("No puedes eliminar tu propia cuenta mientras estás conectado."); return; }
-      const admins = users.filter(u => u.role === 'admin');
-      const target = users.find(u => u.username === username);
-      if(target?.role === 'admin' && admins.length <= 1){ alert("Debe existir al menos un administrador."); return; }
-      const filtered = users.filter(u => u.username !== username);
-      setUsers(filtered);
-      alert("Usuario eliminado (local).");
-    }
-    function renderUsersTable(){
-      const tbody = document.getElementById('usuariosTbody');
-      if(!tbody) return;
-      const users = getUsers();
-      tbody.innerHTML = users.map(u => `
-        <tr>
-          <td class="p-2 border">${u.username}</td>
-          <td class="p-2 border">${u.role}</td>
-          <td class="p-2 border">
-            <button onclick="deleteUser('${u.username.replace(/'/g,"\\'")}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">Eliminar</button>
-          </td>
-        </tr>
-      `).join("");
+    if(user){
+      badge.textContent = `${user.username} (${user.role})`;
+      badge.classList.remove('hidden');
+      btnLogout.classList.remove('hidden');
+      hideLoginModal();
+    }else{
+      badge.classList.add('hidden');
+      btnLogout.classList.add('hidden');
     }
 
-    function toggleDisplay(id, show){
-      const el = document.getElementById(id);
-      if(!el) return;
-      if(show) el.classList.remove('hidden');
-      else el.classList.add('hidden');
+    const admin = isAdmin();
+
+    toggleDisplay('ventasSeccion', true);
+    toggleDisplay('resumenProductos', admin);
+    toggleDisplay('adminUsuariosSection', admin);
+    toggleDisplay('btnExportarExcel', admin);
+    toggleDisplay('btnBorrarVentas', admin);
+    toggleDisplay('btnResumenProductos', admin);
+    toggleDisplay('btnCierreCaja', true);
+    toggleDisplay('btnBaseCaja', true);
+
+    const thAcc = document.getElementById('thAcciones');
+    if (thAcc) thAcc.classList.remove('hidden');
+
+    toggleEfectivoSection();
+    updateBaseBadge();
+  }
+
+  /**********  UTILIDADES **********/
+  function todayStr(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  }
+  function fmtMoney(n) {
+    try { return n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }); }
+    catch { return `$${(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`; }
+  }
+
+  /**********  BASE DE CAJA (Estado + UI) **********/
+  function getBaseCajaLocal() {
+    const data = JSON.parse(localStorage.getItem('baseCaja') || 'null');
+    if(!data) return null;
+    if(data.fecha !== todayStr()) return null;
+    return data;
+  }
+  function setBaseCajaLocal(payload) {
+    localStorage.setItem('baseCaja', JSON.stringify(payload));
+    updateBaseBadge();
+  }
+  function updateBaseBadge(){
+    const base = getBaseCajaLocal();
+    const el = document.getElementById('baseBadge');
+    if(!el) return;
+    if(base){
+      el.textContent = `Base hoy: $${base.monto.toLocaleString('es-CO')} (${base.usuario})`;
+      el.classList.remove('hidden');
+    }else{
+      el.textContent = `Base no registrada`;
+      el.classList.remove('hidden');
     }
+  }
+  function autoPromptBaseIfMissing(){
+    if(!getBaseCajaLocal()){ abrirModalBaseCaja(true); }
+  }
 
-    function applyRoleUI(){
-      const badge = document.getElementById('currentUserBadge');
-      const btnLogout = document.getElementById('btnLogout');
-      const user = getSessionUser();
+  // Estados de conteo de billetes por UI
+  const baseCounts = {}; // base caja
+  const efCounts   = {}; // efectivo recibido
+  const vueltoCounts = {}; // vuelto
+  const gastoCounts = {}; // gastos
 
-      if(user){
-        badge.textContent = `${user.username} (${user.role})`;
-        badge.classList.remove('hidden');
-        btnLogout.classList.remove('hidden');
-        hideLoginModal();
-      }else{
-        badge.classList.add('hidden');
-        btnLogout.classList.add('hidden');
-      }
+  function buildDenomCard(denom, countsObj, totalUpdateFn) {
+    const card = document.createElement('div');
+    card.className = 'relative flex flex-col items-center justify-center border rounded-xl p-3 shadow-sm bg-white';
+    const btnAdd = document.createElement('button');
+    btnAdd.className = `w-full text-center bg-yellow-300 hover:bg-yellow-400 active:bg-yellow-500 text-gray-800 font-semibold rounded-lg py-3 transition`;
+    btnAdd.textContent = fmtMoney(parseInt(denom, 10));
+    const btnSub = document.createElement('button');
+    btnSub.type = 'button';
+    btnSub.title = 'Restar 1';
+    btnSub.textContent = '➖';
+    btnSub.className = `absolute top-1 right-1 text-xs px-2 py-1 rounded-md border bg-white hover:bg-gray-50`;
+    const counter = document.createElement('span');
+    counter.id = `display-${countsObj === baseCounts ? 'base' : countsObj === efCounts ? 'ef' : countsObj === gastoCounts ? 'gasto' : 'vuelto'}-${denom}`;
+    counter.className = 'mt-2 text-sm font-medium text-gray-700';
+    counter.textContent = `x${countsObj[denom] || 0}`;
 
-      const admin = isAdmin();
+    btnAdd.addEventListener('click', () => {
+      countsObj[denom] = (countsObj[denom] || 0) + 1;
+      counter.textContent = `x${countsObj[denom]}`;
+      totalUpdateFn();
+    });
+    btnSub.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const curr = countsObj[denom] || 0;
+      countsObj[denom] = Math.max(0, curr - 1);
+      counter.textContent = `x${countsObj[denom]}`;
+      totalUpdateFn();
+    });
 
-      toggleDisplay('ventasSeccion', true);
-      toggleDisplay('resumenProductos', admin);
-      toggleDisplay('adminUsuariosSection', admin);
-      toggleDisplay('btnExportarExcel', admin);
-      toggleDisplay('btnBorrarVentas', admin);
-      toggleDisplay('btnResumenProductos', admin);
-      toggleDisplay('btnCierreCaja', true);
-      toggleDisplay('btnBaseCaja', true);
+    card.appendChild(btnAdd);
+    card.appendChild(btnSub);
+    card.appendChild(counter);
+    return card;
+  }
 
-      const thAcc = document.getElementById('thAcciones');
-      if (thAcc) thAcc.classList.remove('hidden');
+  function renderDenoms(containerId, countsObj, totalUpdateFn) {
+    const cont = document.getElementById(containerId);
+    cont.innerHTML = '';
+    DENOMS.forEach(d => { if (typeof countsObj[d] !== 'number') countsObj[d] = 0; cont.appendChild(buildDenomCard(d, countsObj, totalUpdateFn)); });
+    totalUpdateFn();
+  }
 
-      onCambioFormaPago();
-      updateBaseBadge();
-    }
+  function sumCounts(countsObj) {
+    let t = 0;
+    DENOMS.forEach(d => t += parseInt(d,10) * (countsObj[d] || 0));
+    return t;
+  }
 
-    /**********  UTILIDADES DE FECHA / DINERO **********/
-    function todayStr(){
-      const d = new Date();
-      const y = d.getFullYear();
-      const m = String(d.getMonth()+1).padStart(2,'0');
-      const day = String(d.getDate()).padStart(2,'0');
-      return `${y}-${m}-${day}`;
-    }
-    function fmtMoney(n){
-      try { return n.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }); }
-      catch { return `$${(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`; }
-    }
-
-    /**********  BASE DE CAJA **********/
-    function getBaseCaja() {
-      const data = JSON.parse(localStorage.getItem('baseCaja') || 'null');
-      if(!data) return null;
-      if(data.fecha !== todayStr()) return null;
-      return data;
-    }
-    function setBaseCaja(counts) {
-      let monto = 0;
-      DENOMS.forEach(d => { monto += (counts[d] || 0) * parseInt(d,10); });
-      const user = getSessionUser();
-      const payload = {
-        fecha: todayStr(),
-        counts,
-        monto,
-        usuario: user?.username || 'N/A',
-        hora: new Date().toLocaleString()
-      };
-      localStorage.setItem('baseCaja', JSON.stringify(payload));
-      updateBaseBadge();
-    }
-    function updateBaseBadge(){
-      const base = getBaseCaja();
-      const el = document.getElementById('baseBadge');
-      if(!el) return;
-      if(base){
-        el.textContent = `Base hoy: ${fmtMoney(base.monto)} (${base.usuario})`;
-        el.classList.remove('hidden');
-      }else{
-        el.textContent = `Base no registrada`;
-        el.classList.remove('hidden');
-      }
-    }
-    function autoPromptBaseIfMissing(){
-      if(!getBaseCaja()){ abrirModalBaseCaja(true); }
-    }
-
-    /**********  UI DENOMINACIONES (reusable) **********/
-    function buildDenomButton(denom, store, onChange, readonly = false) {
-      const card = document.createElement('div');
-      card.className = 'relative flex flex-col items-center justify-center border rounded-xl p-3 shadow-sm bg-white';
-
-      const btnAdd = document.createElement('button');
-      btnAdd.className = `w-full text-center bg-yellow-300 hover:bg-yellow-400 active:bg-yellow-500 text-gray-800 font-semibold rounded-lg py-3 transition ${readonly ? 'opacity-50 cursor-not-allowed' : ''}`;
-      btnAdd.textContent = fmtMoney(parseInt(denom, 10));
-
-      const btnSub = document.createElement('button');
-      btnSub.type = 'button';
-      btnSub.title = 'Restar 1';
-      btnSub.textContent = '➖';
-      btnSub.className = `absolute top-1 right-1 text-xs px-2 py-1 rounded-md border bg-white hover:bg-gray-50 ${readonly ? 'opacity-50 cursor-not-allowed' : ''}`;
-
-      const counter = document.createElement('span');
-      counter.id = `${store.__prefix||'cnt'}-${denom}`;
-      counter.className = 'mt-2 text-sm font-medium text-gray-700';
-      counter.textContent = `x${store[denom] || 0}`;
-
-      const hidden = document.createElement('input');
-      hidden.type = 'hidden';
-      hidden.id = `${store.__prefix||'hid'}_${denom}`;
-      hidden.value = store[denom] || 0;
-
-      if (!readonly) {
-        btnAdd.addEventListener('click', () => {
-          store[denom] = (store[denom] || 0) + 1;
-          counter.textContent = `x${store[denom]}`;
-          hidden.value = store[denom];
-          onChange();
-        });
-        btnSub.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const curr = store[denom] || 0;
-          store[denom] = Math.max(0, curr - 1);
-          counter.textContent = `x${store[denom]}`;
-          hidden.value = store[denom];
-          onChange();
-        });
-      }
-
-      card.appendChild(btnAdd);
-      card.appendChild(btnSub);
-      card.appendChild(counter);
-      card.appendChild(hidden);
-      return card;
-    }
-
-    function renderDenoms(containerId, store, onChange, readonly = false){
-      const cont = document.getElementById(containerId);
-      if (!cont) return;
-      cont.innerHTML = '';
-      DENOMS.forEach(d => {
-        if (typeof store[d] !== 'number') store[d] = 0;
-        cont.appendChild(buildDenomButton(d, store, onChange, readonly));
-      });
-      onChange();
-    }
-
-    /**********  MODAL: BASE CAJA **********/
-    function updateBaseTotal() {
-      let t = 0;
-      DENOMS.forEach(d => t += parseInt(d,10) * (baseCounts[d] || 0));
-      const v1 = document.getElementById('baseTotalValor');
-      const v2 = document.getElementById('baseTotalTexto');
-      if (v1) v1.textContent = fmtMoney(t);
-      if (v2) v2.textContent = `Total base: ${fmtMoney(t)}`;
-    }
-    function initBaseCajaUI() {
-      const baseHoy = getBaseCaja();
-      const soloLectura = !!(baseHoy && !isAdmin());
-
+  function initBaseCajaUI() {
+    try {
+      const baseHoy = getBaseCajaLocal();
       DENOMS.forEach(d => baseCounts[d] = 0);
       if (baseHoy && baseHoy.fecha === todayStr()) {
         const mapa = baseHoy.counts || {};
-        DENOMS.forEach(d => baseCounts[d] = mapa[d] || 0);
+        DENOMS.forEach(d => baseCounts[d] = Number(mapa[d] ?? 0));
       }
-      renderDenoms('baseDenomsContainer', baseCounts, updateBaseTotal, soloLectura);
+      renderDenoms('baseDenomsContainer', baseCounts, () => {
+        const n = sumCounts(baseCounts);
+        const v1 = document.getElementById('baseTotalValor');
+        const v2 = document.getElementById('baseTotalTexto');
+        if (v1) v1.textContent = fmtMoney(n);
+        if (v2) v2.textContent = `Total base: ${fmtMoney(n)}`;
+      });
 
       const meta = document.getElementById('baseMetaInfo');
-      if (meta) meta.textContent = baseHoy ? `Registrada por ${baseHoy.usuario} a las ${baseHoy.hora}.` : `No hay base registrada para hoy (${todayStr()}).`;
+      if (baseHoy) meta.textContent = `Registrada por ${baseHoy.usuario} a las ${baseHoy.hora}.`;
+      else meta.textContent = `No hay base registrada para hoy (${todayStr()}).`;
 
       const btn = document.getElementById('btnGuardarBase');
-      if (btn) {
-        if (!baseHoy || isAdmin()) {
-          btn.classList.remove('hidden');
-          btn.textContent = baseHoy ? 'Actualizar' : 'Guardar';
-          btn.disabled = !!soloLectura;
-        } else {
-          btn.classList.add('hidden');
-        }
-      }
-      updateBaseTotal();
+      btn.classList.remove('hidden');
+      btn.textContent = baseHoy ? 'Actualizar' : 'Guardar';
+    } catch(e) {
+      DENOMS.forEach(d => baseCounts[d] = 0);
+      renderDenoms('baseDenomsContainer', baseCounts, ()=>{});
     }
-    function abrirModalBaseCaja(auto = false) {
-      const m = document.getElementById('modalBaseCaja');
-      if (m) { m.classList.remove('hidden'); m.classList.add('flex'); initBaseCajaUI(); }
+  }
+
+  window.abrirModalBaseCaja = function(auto=false){
+    const m = document.getElementById("modalBaseCaja");
+    m.classList.remove('hidden'); m.classList.add('flex');
+    initBaseCajaUI();
+  };
+  window.cerrarModalBaseCaja = function(){
+    const m = document.getElementById("modalBaseCaja");
+    m.classList.add('hidden'); m.classList.remove('flex');
+  };
+
+  window.confirmarBaseCaja = async function(){
+    const counts = {};
+    DENOMS.forEach(d => counts[d] = baseCounts[d] || 0);
+    let monto = sumCounts(baseCounts);
+    const user = getSessionUser() || { username: 'sistema', role: 'admin', businessId: getOrInitBusinessId() };
+    const payloadLocal = {
+      fecha: todayStr(),
+      counts,
+      monto,
+      usuario: user.username,
+      hora: new Date().toLocaleString()
+    };
+    setBaseCajaLocal(payloadLocal);
+    // Guardar en Firestore
+    try {
+      const businessId = getOrInitBusinessId();
+      await addDoc(collection(db, 'bases'), {
+        fecha: todayStr(),
+        counts,
+        monto,
+        usuario: user.username,
+        businessId,
+        cashier: user.username,
+        updatedAt: serverTimestamp()
+      });
+    } catch(err) {
+      console.warn('save base cloud err:', err);
     }
-    function cerrarModalBaseCaja() {
-      const m = document.getElementById('modalBaseCaja');
-      if (m) { m.classList.add('hidden'); m.classList.remove('flex'); }
+    alert("Base de caja guardada.");
+    cerrarModalBaseCaja();
+  };
+
+  /**********  EFECTIVO RECIBIDO (modal) **********/
+  function updateEfModalTotal() {
+    const t = sumCounts(efCounts);
+    const el = document.getElementById('efModalTotal');
+    if (el) el.textContent = fmtMoney(t);
+    const lbl = document.getElementById("ef_total");
+    if (lbl) lbl.textContent = `Efectivo ingresado: ${fmtMoney(t)}`;
+  }
+  window.abrirModalEfectivo = function() {
+    const m = document.getElementById("modalEfectivo");
+    m.classList.remove('hidden'); m.classList.add('flex');
+    // no reset: permitir rectificar
+    renderDenoms('efModalDenoms', efCounts, updateEfModalTotal);
+  };
+  window.cerrarModalEfectivo = function() {
+    const m = document.getElementById("modalEfectivo");
+    m.classList.add('hidden'); m.classList.remove('flex');
+  };
+  window.confirmarEfectivoModal = function() {
+    updateEfModalTotal(); // ya sincroniza sección principal
+    cerrarModalEfectivo();
+  };
+
+  /**********  VUELTO (modal) **********/
+  function updateVueltoModalTotal() {
+    const t = sumCounts(vueltoCounts);
+    const el = document.getElementById('vueltoModalTotal');
+    if (el) el.textContent = fmtMoney(t);
+  }
+  function abrirModalVuelto(totalVuelto) {
+    // preparar UI
+    const m = document.getElementById("modalVuelto");
+    document.getElementById("vueltoRequeridoTexto").textContent = `Vuelto requerido: ${fmtMoney(totalVuelto)}`;
+    DENOMS.forEach(d => vueltoCounts[d] = 0);
+    m.classList.remove('hidden'); m.classList.add('flex');
+    renderDenoms('vueltoDenoms', vueltoCounts, updateVueltoModalTotal);
+  }
+  window.cerrarModalVuelto = function() {
+    const m = document.getElementById("modalVuelto");
+    m.classList.add('hidden'); m.classList.remove('flex');
+    ventaTemporal = null;
+  };
+  window.confirmarVuelto = function() {
+    if(!ventaTemporal) return alert("No hay venta en proceso.");
+    const totalDevuelto = sumCounts(vueltoCounts);
+    if (totalDevuelto !== ventaTemporal.vuelto) {
+      alert(`El total ingresado (${fmtMoney(totalDevuelto)}) no coincide con el vuelto requerido (${fmtMoney(ventaTemporal.vuelto)}).`);
+      return;
     }
-    async function confirmarBaseCaja() {
-      const counts = {};
-      DENOMS.forEach(d => counts[d] = parseInt(document.getElementById(`hid_${d}`)?.value || baseCounts[d] || 0,10) || 0);
-      setBaseCaja(counts);
-      try{ await guardarBaseEnFirestore(JSON.parse(localStorage.getItem("baseCaja"))); }catch(e){}
-      alert('Base de caja guardada.');
-      cerrarModalBaseCaja();
+    const billetesDevueltos = {};
+    DENOMS.forEach(d => billetesDevueltos[d] = vueltoCounts[d] || 0);
+    const venta = { ...ventaTemporal, billetesDevueltos, comanda: comandaEnEdicion ?? obtenerSiguienteComanda() };
+
+    // Persistir
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
+    ventas.push(venta);
+    localStorage.setItem("ventas", JSON.stringify(ventas));
+
+    // Firestore
+    guardarVentaEnFirestore(venta).catch(e=>console.warn('save venta err:', e));
+
+    comandaEnEdicion = null; ventaTemporal = null;
+    cerrarModalVuelto();
+    alert("Venta guardada exitosamente.");
+    limpiarPedido();
+    mostrarVentas();
+    const rp = document.getElementById("resumenProductos"); if (rp) rp.classList.add("hidden");
+  };
+
+  /**********  GASTOS (modal) **********/
+  function updateGastoTotal() {
+    const t = sumCounts(gastoCounts);
+    const el = document.getElementById('gastoEfTotal');
+    if (el) el.textContent = fmtMoney(t);
+  }
+  window.abrirModalGasto = function() {
+    const m = document.getElementById("modalGasto");
+    m.classList.remove('hidden'); m.classList.add('flex');
+    DENOMS.forEach(d => gastoCounts[d] = 0);
+    renderDenoms('gastoDenoms', gastoCounts, updateGastoTotal);
+  };
+  window.cerrarModalGasto = function() {
+    const m = document.getElementById("modalGasto");
+    m.classList.add('hidden'); m.classList.remove('flex');
+  };
+  window.confirmarGasto = async function() {
+    const concepto = (document.getElementById('gastoConcepto').value || '').trim();
+    const totalGasto = parseInt(document.getElementById('gastoTotal').value || '0', 10) || 0;
+    const efectivoEntregado = sumCounts(gastoCounts);
+    if (!concepto) return alert('Indica el concepto del gasto.');
+    if (totalGasto <= 0) return alert('Indica el total del gasto.');
+    if (efectivoEntregado < totalGasto) return alert('El efectivo entregado es menor que el gasto.');
+
+    // Descontar de la base local
+    const base = getBaseCajaLocal();
+    if (!base) { alert('No hay base de caja registrada hoy.'); return; }
+    const nuevaCounts = { ...base.counts };
+    // Quitar billetes usados del gasto
+    for (const d of DENOMS) {
+      const usar = gastoCounts[d] || 0;
+      const disponible = nuevaCounts[d] || 0;
+      if (usar > disponible) { alert(`No hay suficientes billetes de ${fmtMoney(parseInt(d,10))} en base.`); return; }
+      nuevaCounts[d] = disponible - usar;
+    }
+    // Recalcular monto final base
+    let nuevoMonto = 0; DENOMS.forEach(d => nuevoMonto += (nuevaCounts[d] || 0) * parseInt(d,10));
+    const user = getSessionUser() || { username: 'sistema', role: 'admin', businessId: getOrInitBusinessId() };
+    const payloadBase = {
+      fecha: todayStr(),
+      counts: nuevaCounts,
+      monto: nuevoMonto,
+      usuario: user.username,
+      hora: new Date().toLocaleString()
+    };
+    setBaseCajaLocal(payloadBase);
+    updateBaseBadge();
+
+    // Guardar gasto como "movimiento" y en "gastos"
+    const gastoDoc = {
+      concepto,
+      total: totalGasto,
+      efectivoEntregado,
+      billetesEntregados: { ...gastoCounts },
+      fecha: new Date().toLocaleString(),
+      cashier: user.username
+    };
+    try {
+      await guardarGastoEnFirestore(gastoDoc);
+      await guardarBaseEnFirestore(payloadBase);
+      await registrarMovimiento('gasto', totalGasto, concepto);
+    } catch(e) {
+      console.warn('save gasto cloud err:', e);
     }
 
-    /**********  MODAL: EFECTIVO **********/
-    function updateEfTotal() {
-      let t = 0;
-      DENOMS.forEach(d => t += parseInt(d,10) * (efCounts[d] || 0));
-      const v = document.getElementById('efTotalValor');
-      if (v) v.textContent = fmtMoney(t);
-    }
-    function abrirModalEfectivo(){
-      if (!Object.keys(efCounts).length) DENOMS.forEach(d=> efCounts[d]=0);
-      const m = document.getElementById('modalEfectivo');
-      if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
-      renderDenoms('efDenomsContainer', efCounts, updateEfTotal, false);
-    }
-    function cerrarModalEfectivo(){
-      const m = document.getElementById('modalEfectivo');
-      if (m){ m.classList.add('hidden'); m.classList.remove('flex'); }
-    }
-    function confirmarEfectivoRecibido(){ cerrarModalEfectivo(); }
-    function onCambioFormaPago(){
-      const forma = document.getElementById("formaPago").value;
-      const btnEf = document.getElementById("btnAbrirEfectivo");
-      if (forma === "Efectivo") btnEf.classList.remove('hidden');
-      else btnEf.classList.add('hidden');
-    }
-    function getEfectivoRecibidoFromCounts(){
-      let totalRecibido = 0; const map = {};
-      DENOMS.forEach(d => { const c = parseInt(efCounts[d]||0,10)||0; map[d]=c; totalRecibido += c*parseInt(d,10); });
-      return { recibidos: map, totalRecibido };
-    }
+    // Limpiar UI
+    document.getElementById('gastoConcepto').value = '';
+    document.getElementById('gastoTotal').value = '';
+    DENOMS.forEach(d => gastoCounts[d] = 0);
+    updateGastoTotal();
 
-    /**********  MODAL: VUELTO **********/
-    let vueltoObjetivo = 0;
-    function updateVuTotal(){
-      let t = 0;
-      DENOMS.forEach(d => t += parseInt(d,10) * (vuCounts[d] || 0));
-      const v = document.getElementById('vuTotalValor');
-      if (v) v.textContent = fmtMoney(t);
-    }
-    function abrirModalVuelto(vuelto) {
-      vueltoObjetivo = vuelto;
-      DENOMS.forEach(d=> vuCounts[d]=0);
-      const t = document.getElementById('vueltoRequeridoTexto');
-      if (t) t.textContent = `Vuelto requerido: ${fmtMoney(vuelto)}`;
-      const m = document.getElementById('modalVuelto');
-      if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
-      renderDenoms('vuDenomsContainer', vuCounts, updateVuTotal, false);
-    }
-    function cerrarModalVuelto() {
-      const m = document.getElementById('modalVuelto');
-      if (m){ m.classList.add('hidden'); m.classList.remove('flex'); }
-      ventaTemporal = null;
-    }
-    function confirmarVuelto() {
-      if(!ventaTemporal) return alert("No hay venta en proceso.");
-      let totalDevuelto = 0; const billetesDevueltos = {};
-      DENOMS.forEach(d => { const c = parseInt(vuCounts[d]||0,10)||0; billetesDevueltos[d]=c; totalDevuelto += c * parseInt(d, 10); });
-      if (totalDevuelto !== vueltoObjetivo) {
-        alert(`El total ingresado (${fmtMoney(totalDevuelto)}) no coincide con el vuelto requerido (${fmtMoney(vueltoObjetivo)}).`);
-        return;
-      }
-      const venta = { ...ventaTemporal, billetesDevueltos, comanda: comandaEnEdicion ?? obtenerSiguienteComanda() };
-      const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
-      ventas.push(venta);
-      localStorage.setItem("ventas", JSON.stringify(ventas));
-      try{ guardarVentaEnFirestore(venta); }catch(e){}
-      comandaEnEdicion = null; ventaTemporal = null;
-      cerrarModalVuelto();
-      alert("Venta guardada exitosamente.");
-      limpiarPedido();
-      mostrarVentas();
-      const rp = document.getElementById("resumenProductos"); if (rp) rp.classList.add("hidden");
-    }
+    alert('Gasto registrado y descontado de la base.');
+    cerrarModalGasto();
+  };
 
-    /**********  MODAL: GASTO **********/
-    function updateGastoEfTotal(){
-      let t = 0;
-      DENOMS.forEach(d => t += parseInt(d,10) * (gastoCounts[d] || 0));
-      const v = document.getElementById('gastoEfTotal');
-      if (v) v.textContent = fmtMoney(t);
-    }
-    function abrirModalGasto(){
-      DENOMS.forEach(d=> gastoCounts[d]=0);
-      const m = document.getElementById('modalGasto');
-      if (m) { m.classList.remove('hidden'); m.classList.add('flex'); }
-      renderDenoms('gastoDenomsContainer', gastoCounts, updateGastoEfTotal, false);
-    }
-    function cerrarModalGasto(){
-      const m = document.getElementById('modalGasto');
-      if (m){ m.classList.add('hidden'); m.classList.remove('flex'); }
-    }
-    async function confirmarGasto(){
-      const desc = document.getElementById('gastoDescripcion').value.trim();
-      const totalG = parseInt(document.getElementById('gastoTotal').value || "0",10) || 0;
-      if (!desc) return alert("Agrega una descripción/proveedor.");
-      if (totalG <= 0) return alert("Ingresa un total válido.");
-
-      let pagadoEf = 0; const efMap = {};
-      DENOMS.forEach(d => { const c = parseInt(gastoCounts[d]||0,10)||0; efMap[d]=c; pagadoEf += c*parseInt(d,10); });
-
-      const base = getBaseCaja();
-      if (!base) { alert("No hay base de caja registrada hoy. Regístrala antes de pagar."); return; }
-
-      if (pagadoEf > base.monto) { alert("El efectivo indicado supera lo que hay en caja."); return; }
-      for (const d of DENOMS){
-        const quitar = efMap[d] || 0;
-        const enBase = base.counts[d] || 0;
-        if (quitar > enBase) { alert(`No hay suficientes billetes/monedas de ${fmtMoney(parseInt(d,10))} en la base.`); return; }
-      }
-      DENOMS.forEach(d => { base.counts[d] = (base.counts[d]||0) - (efMap[d]||0); });
-      setBaseCaja(base.counts);
-      try{ await guardarBaseEnFirestore(JSON.parse(localStorage.getItem("baseCaja"))); }catch(e){}
-
-      const gasto = {
-        descripcion: desc,
-        total: totalG,
-        fecha: new Date().toLocaleString(),
-        efectivoUtilizado: efMap
-      };
-      const gastosLS = JSON.parse(localStorage.getItem("gastos")||"[]"); gastosLS.push(gasto);
-      localStorage.setItem("gastos", JSON.stringify(gastosLS));
-      try{ await guardarGastoEnFirestore(gasto); }catch(e){}
-
-      alert("Gasto guardado y descontado de caja.");
-      cerrarModalGasto();
-    }
-
-    /**********  PEDIDOS **********/
-    function agregarProducto(nombre, precio) {
-      pedido.push({ nombre, precio });
+  /**********  VENTAS **********/
+  window.agregarProducto = function(nombre, precio) {
+    pedido.push({ nombre, precio });
+    actualizarTotal();
+    actualizarVistaPedido();
+  };
+  window.quitarProducto = function(index) {
+    if (index >= 0 && index < pedido.length) {
+      pedido.splice(index, 1);
       actualizarTotal();
       actualizarVistaPedido();
     }
-    function quitarProducto(index) {
-      if (index >= 0 && index < pedido.length) {
-        pedido.splice(index, 1);
-        actualizarTotal();
-        actualizarVistaPedido();
-      }
-    }
-    function actualizarTotal() { total = pedido.reduce((acc, p) => acc + p.precio, 0); }
-    function actualizarVistaPedido() {
-      const lista = document.getElementById("listaPedido");
-      lista.innerHTML = "";
-      pedido.forEach((p, i) => {
-        const li = document.createElement("li");
-        li.innerHTML = `${p.nombre} - ${fmtMoney(p.precio)} <button onclick="quitarProducto(${i})" class='text-red-600 ml-2'>❌</button>`;
-        lista.appendChild(li);
-      });
-      document.getElementById("total").textContent = `Total: ${fmtMoney(total)}`;
-    }
-    function limpiarPedido() {
-      pedido = []; total = 0; actualizarVistaPedido();
-      ["cliente","formaPago","tipoPedido","observaciones"].forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
-      DENOMS.forEach(d=> efCounts[d]=0);
-      onCambioFormaPago();
-    }
+  };
+  function actualizarTotal() { total = pedido.reduce((acc, p) => acc + p.precio, 0); }
+  function actualizarVistaPedido() {
+    const lista = document.getElementById("listaPedido");
+    lista.innerHTML = "";
+    pedido.forEach((p, i) => {
+      const li = document.createElement("li");
+      li.innerHTML = `${p.nombre} - ${fmtMoney(p.precio)} <button onclick="quitarProducto(${i})" class='text-red-600 ml-2'>❌</button>`;
+      lista.appendChild(li);
+    });
+    document.getElementById("total").textContent = `Total: ${fmtMoney(total)}`;
+  }
+  window.toggleEfectivoSection = function(){
+    const forma = document.getElementById("formaPago").value;
+    const sec = document.getElementById("efectivoSection");
+    if(forma === "Efectivo") sec.classList.remove('hidden');
+    else sec.classList.add('hidden');
+  };
+  function limpiarPedido() {
+    pedido = []; total = 0; actualizarVistaPedido();
+    ["cliente","formaPago","tipoPedido","observaciones"].forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
+    const eftxt = document.getElementById("ef_total"); if(eftxt) eftxt.textContent = "";
+    DENOMS.forEach(d => { efCounts[d] = 0; });
+    toggleEfectivoSection();
+  }
 
-    /**********  GUARDAR VENTA **********/
-    function guardarVenta() {
-      if(!getSessionUser()){ showLoginModal(); return; }
-      const cliente = document.getElementById("cliente").value.trim();
-      const formaPago = document.getElementById("formaPago").value;
-      const tipoPedido = document.getElementById("tipoPedido").value;
-      if (pedido.length === 0) return alert("Agrega productos al pedido.");
-      if (!cliente) return alert("Por favor ingresa el nombre del cliente.");
-      if (!formaPago) return alert("Por favor selecciona una forma de pago.");
-      if (!tipoPedido) return alert("Por favor selecciona un tipo de pedido.");
-      const observaciones = document.getElementById("observaciones").value.trim();
+  window.guardarVenta = function() {
+    if(!getSessionUser()){ showLoginModal(); return; }
+    const cliente = document.getElementById("cliente").value.trim();
+    const formaPago = document.getElementById("formaPago").value;
+    const tipoPedido = document.getElementById("tipoPedido").value;
+    if (pedido.length === 0) return alert("Agrega productos al pedido.");
+    if (!cliente) return alert("Por favor ingresa el nombre del cliente.");
+    if (!formaPago) return alert("Por favor selecciona una forma de pago.");
+    if (!tipoPedido) return alert("Por favor selecciona un tipo de pedido.");
+    const observaciones = document.getElementById("observaciones").value.trim();
 
-      const { recibidos: billetesRecibidos, totalRecibido: efectivoRecibido } =
-        (formaPago === "Efectivo") ? getEfectivoRecibidoFromCounts() : { recibidos: Object.fromEntries(DENOMS.map(d=>[d,0])), totalRecibido: 0 };
+    const efectivoRecibido = sumCounts(efCounts);
+    let vuelto = 0;
+    const baseVenta = {
+      cliente, formaPago, tipoPedido, observaciones,
+      pedido: [...pedido], total,
+      fecha: new Date().toLocaleString(),
+      billetesRecibidos: formaPago === "Efectivo" ? { ...efCounts } : Object.fromEntries(DENOMS.map(d=>[d,0])),
+      billetesDevueltos: {},
+      efectivoRecibido: formaPago === "Efectivo" ? efectivoRecibido : 0
+    };
 
-      let vuelto = 0;
-      if (formaPago === "Efectivo") {
-        if (efectivoRecibido < total) return alert(`Efectivo insuficiente. Faltan ${fmtMoney(total - efectivoRecibido)}.`);
-        vuelto = efectivoRecibido - total;
-      }
-
-      const baseVenta = {
-        cliente, formaPago, tipoPedido, observaciones,
-        pedido: [...pedido], total,
-        fecha: new Date().toLocaleString(),
-        billetesRecibidos, billetesDevueltos: {},
-        efectivoRecibido
-      };
-
-      if (formaPago === "Efectivo" && vuelto > 0) {
-        ventaTemporal = { ...baseVenta, vuelto, comanda: null };
-        abrirModalVuelto(vuelto);
-        return;
-      }
-
-      const venta = { ...baseVenta, comanda: comandaEnEdicion ?? obtenerSiguienteComanda() };
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-      ventas.push(venta);
-      localStorage.setItem("ventas", JSON.stringify(ventas));
-      try{ guardarVentaEnFirestore(venta); }catch(e){}
-      comandaEnEdicion = null;
-      alert("Venta guardada exitosamente.");
-      limpiarPedido();
-      mostrarVentas();
-      const rp = document.getElementById("resumenProductos"); if (rp) rp.classList.add("hidden");
+    if (formaPago === "Efectivo") {
+      if (efectivoRecibido < total) return alert(`Efectivo insuficiente. Faltan ${fmtMoney(total - efectivoRecibido)}.`);
+      vuelto = efectivoRecibido - total;
     }
 
-    /**********  LISTADO / ACCIONES DE VENTAS **********/
-    function mostrarVentas() {
-      const contenedor = document.getElementById("ventasGuardadas");
-      if(!contenedor) return;
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-      const admin = isAdmin();
-      contenedor.innerHTML = "";
-
-      ventas.forEach((v, i) => {
-        const resumen = {};
-        (v.pedido||[]).forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
-        const productosResumen = Object.entries(resumen).map(([prod, cant]) => `${prod}: ${cant}`).join("<br>");
-
-        contenedor.innerHTML += `
-          <tr>
-            <td class='border p-1'>${v.comanda ?? (i + 1)}</td>
-            <td class='border p-1'>${v.fecha||""}</td>
-            <td class='border p-1'>${v.cliente||""}</td>
-            <td class='border p-1'>${v.formaPago||""}</td>
-            <td class='border p-1'>${v.tipoPedido||""}</td>
-            <td class='border p-1'>${productosResumen}</td>
-            <td class='border p-1'>${fmtMoney(v.total||0)}</td>
-            <td class='border p-1 space-x-1'>
-              <button onclick="imprimirVentaCliente(${i})" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">🧾 Cliente</button>
-              <button onclick="imprimirVentaCocina(${i})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">👨‍🍳 Cocina</button>
-              ${ admin ? `<button onclick="editarVenta(${i})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">📝 Editar</button>` : ``}
-            </td>
-          </tr>`;
-      });
+    if (formaPago === "Efectivo" && vuelto > 0) {
+      ventaTemporal = { ...baseVenta, vuelto, comanda: null };
+      abrirModalVuelto(vuelto);
+      return;
     }
 
-    function filtrarVentasPorCliente() {
-      const filtro = document.getElementById("filtroCliente").value.toLowerCase();
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-      const contenedor = document.getElementById("ventasGuardadas");
-      const admin = isAdmin();
-      contenedor.innerHTML = "";
+    const venta = { ...baseVenta, comanda: comandaEnEdicion ?? obtenerSiguienteComanda() };
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
+    ventas.push(venta);
+    localStorage.setItem("ventas", JSON.stringify(ventas));
+    guardarVentaEnFirestore(venta).catch(e=>console.warn('save venta err:', e));
 
-      ventas.forEach((v, i) => {
-        if (!(v.cliente||"").toLowerCase().includes(filtro)) return;
-        const resumen = {};
-        (v.pedido||[]).forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
-        const productosResumen = Object.entries(resumen).map(([prod, cant]) => `${prod}: ${cant}`).join("<br>");
+    comandaEnEdicion = null;
+    alert("Venta guardada exitosamente.");
+    limpiarPedido();
+    mostrarVentas();
+    const rp = document.getElementById("resumenProductos"); if (rp) rp.classList.add("hidden");
+  };
 
-        contenedor.innerHTML += `
-          <tr>
-            <td class='border p-1'>${v.comanda ?? (i + 1)}</td>
-            <td class='border p-1'>${v.fecha||""}</td>
-            <td class='border p-1'>${v.cliente||""}</td>
-            <td class='border p-1'>${v.formaPago||""}</td>
-            <td class='border p-1'>${v.tipoPedido||""}</td>
-            <td class='border p-1'>${productosResumen}</td>
-            <td class='border p-1'>${fmtMoney(v.total||0)}</td>
-            <td class='border p-1 space-x-1'>
-              <button onclick="imprimirVentaCliente(${i})" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">🧾 Cliente</button>
-              <button onclick="imprimirVentaCocina(${i})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">👨‍🍳 Cocina</button>
-              ${ admin ? `<button onclick="editarVenta(${i})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">📝 Editar</button>` : ``}
-            </td>
-          </tr>`;
-      });
+  /**********  Firestore: lecturas/escrituras con businessId protegido **********/
+  async function cargarVentasDesdeFirestore() {
+    const businessId = getOrInitBusinessId();
+    let qRef = collection(db, 'ventas');
+    let q = query(qRef, where('businessId', '==', businessId), orderBy('createdAt', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+
+  async function guardarVentaEnFirestore(venta) {
+    const businessId = getOrInitBusinessId();
+    const user = getSessionUser() || { username: 'cajero-local', role: 'cajero' };
+    const payload = {
+      ...venta,
+      businessId,
+      cashier: user.username,
+      createdAt: serverTimestamp()
+    };
+    await addDoc(collection(db, 'ventas'), payload);
+    await registrarMovimiento('venta', venta.total, `Venta ${venta.comanda ?? ''}`);
+  }
+
+  async function guardarGastoEnFirestore(gasto) {
+    const businessId = getOrInitBusinessId();
+    const user = getSessionUser() || { username: 'cajero-local', role: 'cajero' };
+    const payload = {
+      ...gasto,
+      businessId,
+      cashier: user.username,
+      createdAt: serverTimestamp()
+    };
+    await addDoc(collection(db, 'gastos'), payload);
+  }
+
+  async function guardarBaseEnFirestore(base) {
+    const businessId = getOrInitBusinessId();
+    const user = getSessionUser() || { username: 'sistema', role: 'admin' };
+    const payload = {
+      ...base,
+      businessId,
+      cashier: user.username,
+      updatedAt: serverTimestamp()
+    };
+    await addDoc(collection(db, 'bases'), payload);
+  }
+
+  async function registrarMovimiento(tipo, monto, notas='') {
+    const businessId = getOrInitBusinessId();
+    const user = getSessionUser() || { username: 'sistema', role: 'admin' };
+    const payload = {
+      tipo, monto, notas,
+      businessId,
+      cashier: user.username,
+      createdAt: serverTimestamp()
+    };
+    await addDoc(collection(db, 'movimientos'), payload);
+  }
+
+  /**********  LISTADO / ACCIONES DE VENTAS **********/
+  window.mostrarVentas = async function() {
+    const contenedor = document.getElementById("ventasGuardadas");
+    if(!contenedor) return;
+    contenedor.innerHTML = "";
+    let ventas = [];
+    try {
+      ventas = await cargarVentasDesdeFirestore();
+      // Sincroniza local (opcional)
+      localStorage.setItem('ventas', JSON.stringify(ventas));
+    } catch(e) {
+      console.warn('Fallo lectura Firestore, uso LocalStorage:', e);
+      ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
     }
+    const admin = isAdmin();
 
-    /**********  EXPORTAR / CIERRE / IMPRESIÓN **********/
-    async function exportarVentasExcelConEstilo(){
-      if(!isAdmin()){ alert("Solo el Administrador puede exportar a Excel."); return; }
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-      if (ventas.length === 0) return alert("No hay ventas registradas.");
-      const workbook = new ExcelJS.Workbook();
-      const sheet = workbook.addWorksheet("Ventas del Día");
-      const headers = ["#", "Fecha", "Cliente", "Forma de Pago", "Tipo de Pedido", "Producto", "Precio (COP)", "Total Venta (COP)"];
-      sheet.addRow(headers);
-      let totalGlobal = 0; const conteoProductos = {};
-      ventas.forEach((venta, i) => {
-        const { fecha, cliente, formaPago, tipoPedido, total, pedido } = venta;
-        totalGlobal += parseFloat(total) || 0;
-        (pedido||[]).forEach(producto => {
-          sheet.addRow([venta.comanda ?? (i + 1), fecha, cliente, formaPago, tipoPedido, producto.nombre, parseFloat(producto.precio), parseFloat(total)]);
-          conteoProductos[producto.nombre] = (conteoProductos[producto.nombre] || 0) + 1;
-        });
-      });
-      sheet.getRow(1).eachCell(c => { c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1F4E78"}}; c.font={color:{argb:"FFFFFFFF"},bold:true}; c.alignment={vertical:"middle",horizontal:"center"}; c.border={top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}}; });
-      for(let r=2;r<=sheet.rowCount;r++){ const row=sheet.getRow(r); const even=r%2===0; row.eachCell(c=>{c.fill={type:"pattern",pattern:"solid",fgColor:{argb: even ? "FFF2F2F2":"FFFFFFFF"}}; c.border={top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}};}); row.getCell(7).numFmt='"$"#,##0'; row.getCell(8).numFmt='"$"#,##0';}
-      sheet.addRow([]); const totalRow = sheet.addRow(["","","","","","TOTAL DEL DÍA:","",totalGlobal]); totalRow.getCell(8).numFmt='"$"#,##0'; totalRow.font={bold:true};
-      let prodMas="", max=0; for(const [prod,c] of Object.entries(conteoProductos)){ if(c>max){max=c;prodMas=prod;} }
-      const r2 = sheet.addRow(["","","","","","Producto más vendido:","",`${prodMas} (${max})`]); r2.font={italic:true};
-      sheet.columns.forEach(col => col.width = 18);
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-      const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url;
-      const d = new Date(); a.download = `Ventas_del_día_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.xlsx`;
-      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-    }
-
-    function cierreDeCaja(){
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-      const base = getBaseCaja();
-
-      const sumRec = {}, sumDev = {}, sumNet = {}, finalCounts = {};
-      let montoRec=0, montoDev=0, montoNet=0, montoBase=0, montoFinal=0;
-
-      DENOMS.forEach(d=>{sumRec[d]=0; sumDev[d]=0; sumNet[d]=0; finalCounts[d]=0;});
-
-      ventas.forEach(v=>{
-        DENOMS.forEach(d=>{
-          sumRec[d]+= (v.billetesRecibidos?.[d]||0);
-          sumDev[d]+= (v.billetesDevueltos?.[d]||0);
-        });
-      });
-
-      DENOMS.forEach(d=>{
-        sumNet[d]= sumRec[d]-sumDev[d];
-        const baseCnt = base?.counts?.[d] || 0;
-        finalCounts[d] = baseCnt + sumNet[d];
-
-        montoRec  += sumRec[d]*parseInt(d,10);
-        montoDev  += sumDev[d]*parseInt(d,10);
-        montoNet  += sumNet[d]*parseInt(d,10);
-        montoBase += baseCnt*parseInt(d,10);
-        montoFinal+= finalCounts[d]*parseInt(d,10);
-      });
-
-      const html = `
-        <html><head><title>Cierre de Caja</title><style>
-          body { font-family: monospace; font-size: 12px; width: 76mm; padding: 10px 12px; margin: 0; }
-          h2 { text-align: center; font-size: 18px; margin: 8px 0; font-weight: bold; }
-          .line { border-top: 1px dashed #000; margin: 8px 0; }
-          table { width:100%; border-collapse: collapse; }
-          th,td{ padding:4px 2px; text-align:right; }
-          th:first-child,td:first-child{text-align:left;}
-          .totales p{ margin:3px 0; font-weight:bold; }
-          .foot{ text-align:center; margin-top:10px; }
-        </style></head><body>
-          <h2>CIERRE DE CAJA</h2>
-          <p>Fecha: ${new Date().toLocaleString()}</p>
-          <div class="line"></div>
-          <table>
-            <thead>
-              <tr>
-                <th>Denom</th>
-                <th>Base</th>
-                <th>Rec</th>
-                <th>Dev</th>
-                <th>Neto</th>
-                <th>Final</th>
-                <th>$ Final</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${DENOMS.map(d=>{
-                const baseCnt = base?.counts?.[d] || 0;
-                const rec = sumRec[d], dev = sumDev[d], net = sumNet[d], fin = finalCounts[d];
-                const montoFin = fin * parseInt(d,10);
-                return `<tr>
-                  <td>${parseInt(d,10).toLocaleString('es-CO')}</td>
-                  <td>${baseCnt}</td>
-                  <td>${rec}</td>
-                  <td>${dev}</td>
-                  <td>${net}</td>
-                  <td>${fin}</td>
-                  <td>${montoFin.toLocaleString('es-CO',{style:'currency',currency:'COP'})}</td>
-                </tr>`;
-              }).join("")}
-            </tbody>
-          </table>
-          <div class="line"></div>
-          <div class="totales">
-            <p>Base de Caja: ${fmtMoney(montoBase)} ${base ? `(${base.usuario} - ${base.hora})` : '(no registrada)'}</p>
-            <p>Efectivo Recibido Ventas: ${fmtMoney(montoRec)}</p>
-            <p>Efectivo Devuelto: ${fmtMoney(montoDev)}</p>
-            <p>Neto por Ventas: ${fmtMoney(montoNet)}</p>
-            <p>Total Esperado en Caja (Base + Neto): ${fmtMoney(montoFinal)}</p>
-          </div>
-          <div class="line"></div>
-          <p class="foot">Gracias. — Señor Arepa</p>
-          <script>window.print();<\/script>
-        </body></html>`;
-      const w = window.open("", "_blank", "width=460,height=720"); w.document.write(html); w.document.close(); w.focus();
-    }
-
-    /**********  IMPRESIONES **********/
-    function imprimirUltimaCocinero() {
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-      if (ventas.length === 0) return alert("No hay ventas para imprimir.");
-      const ultimaVenta = ventas[ventas.length - 1];
-      if (!ultimaVenta.pedido || !Array.isArray(ultimaVenta.pedido)) return alert("La última venta no tiene productos válidos.");
-      const resumen = {}; ultimaVenta.pedido.forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
-      const contenido = `
-        <!DOCTYPE html><html><head><style>
-          body{font-family:monospace;font-size:15px;margin:0;padding:11px;}
-          h2{text-align:center;font-size:19px;margin-bottom:11px;}
-          .info{margin-bottom:10px;} .info p{margin:2px 0;}
-          ul{list-style:none;padding:0;margin:0;} li{padding:4px 0;border-bottom:2px dashed #000;font-size:19px;}
-        </style></head><body>
-          <h2>🧾 PEDIDO A COCINA</h2>
-          <div class="info">
-            <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${ultimaVenta.comanda ?? ventas.length}</p>
-            <p><strong>Cliente:</strong> ${ultimaVenta.cliente || "Sin nombre"}</p>
-            <p><strong>Hora:</strong> ${ultimaVenta.fecha || "Sin hora"}</p>
-            <p><strong>Tipo de Pedido:</strong> ${ultimaVenta.tipoPedido || "-"}</p>
-            ${ultimaVenta.observaciones ? `<p><strong>Observaciones:</strong> ${ultimaVenta.observaciones}</p>` : ""}
-          </div>
-          <ul>${Object.entries(resumen).map(([producto, cantidad]) => `<li>${producto} x${cantidad}</li>`).join("")}</ul>
-          <p style="text-align:center;margin-top:10px;">👨‍🍳 Preparar con cuidado</p>
-          <script>window.print();<\/script>
-        </body></html>`;
-      const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
-    }
-
-    function imprimirUltimaCliente() {
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-      if (ventas.length === 0) return alert("No hay ventas para imprimir.");
-      const v = ventas[ventas.length - 1]; const obs = v.observaciones || "";
-      let contenido = `
-        <html><head><title>Recibo Cliente</title><style>
-          body{font-family:monospace;font-size:14px;width:58mm;padding:10px 12px;margin:0;line-height:1.5;}
-          h2{text-align:center;font-size:19px;margin:14px 0 5px;font-weight:bold;}
-          .sub-info{text-align:center;font-size:12px;margin-bottom:10px;line-height:1.3;}
-          .line{border-top:1px dashed #000;margin:9px 0;} ul{list-style:none;padding:0;margin:0;} li{margin-bottom:7px;}
-          .total{text-align:right;font-weight:bold;margin-top:14px;font-size:16px;} .info p{margin:6px 0;} .info strong{font-weight:bold;}
-          p.thanks{text-align:center;margin-top:22px;font-weight:bold;font-size:15px;}
-        </style></head><body>
-          <h2>SEÑOR AREPA</h2>
-          <div class="sub-info">Matrícula No 289546<br>CALLE 19#25-03 ESQUINA<br>BARRIO SAN JOSÉ, ARMENIA</div>
-          <div class="line"></div>
-          <div class="info">
-            <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? ventas.length}</p>
-            <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? ventas.length}</p>
-            <p><strong>Cliente:</strong> ${v.cliente || "N/A"}</p>
-            <p><strong>Fecha:</strong> ${v.fecha}</p>
-            <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
-            ${obs ? `<p><strong>Observaciones:</strong> ${obs}</p>` : ""}
-          </div>
-          <div class="line"></div>
-          <ul>${(v.pedido||[]).map(p => `<li>${p.nombre} - ${fmtMoney(p.precio)}</li>`).join("")}</ul>
-          <div class="line"></div>
-          <p class="total">Total: ${fmtMoney(v.total||0)}</p>
-          <div class="line"></div>
-          <p class="thanks">¡Gracias por su compra!</p>
-          <script>window.print();<\/script>
-        </body></html>`;
-      const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
-    }
-
-    function imprimirVentaCliente(index){
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || []; const v = ventas[index]; if (!v) return alert("Venta no encontrada.");
-      let contenido = `
-        <html><head><title>Recibo Cliente</title><style>
-          body{font-family:monospace;font-size:14px;width:58mm;padding:10px 12px;margin:0;line-height:1.5;}
-          h2{text-align:center;font-size:19px;margin:14px 0;font-weight:bold;}
-          .line{border-top:1px dashed #000;margin:9px 0;} ul{list-style:none;padding:0;margin:0;} li{margin-bottom:7px;}
-          .total{text-align:right;font-weight:bold;margin-top:14px;font-size:16px;} .info p{margin:6px 0;} .info strong{font-weight:bold;}
-          p.thanks{text-align:center;margin-top:22px;font-weight:bold;font-size:15px;}
-        </style></head><body>
-          <h2>SEÑOR AREPA</h2>
-          <div class="line"></div>
-          <div class="info">
-            <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? (index + 1)}</p>
-            <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? (index + 1)}</p>
-            <p><strong>Cliente:</strong> ${v.cliente || "N/A"}</p>
-            <p><strong>Fecha:</strong> ${v.fecha}</p>
-            <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
-            ${v.observaciones ? `<p><strong>Observaciones:</strong> ${v.observaciones}</p>` : ""}
-          </div>
-          <div class="line"></div>
-          <ul>${(v.pedido||[]).map(p => `<li>${p.nombre} - ${fmtMoney(p.precio)}</li>`).join("")}</ul>
-          <div class="line"></div>
-          <p class="total">Total: ${fmtMoney(v.total||0)}</p>
-          <div class="line"></div>
-          <p class="thanks">¡Gracias por su compra!</p>
-          <script>window.print();<\/script>
-        </body></html>`;
-      const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
-    }
-    function imprimirVentaCocina(index){
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || []; const v = ventas[index]; if (!v) return alert("Venta no encontrada.");
-      const resumen = {}; (v.pedido||[]).forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
-      const contenido = `
-        <html><head><title>Pedido Cocina</title><style>
-          body{font-family:monospace;font-size:15px;margin:0;padding:11px;}
-          h2{text-align:center;font-size:19px;margin-bottom:11px;}
-          .info{margin-bottom:10px;} .info p{margin:2px 0;}
-          ul{list-style:none;padding:0;margin:0;} li{padding:4px 0;border-bottom:2px dashed #000;font-size:19px;}
-        </style></head><body>
-          <h2>🧾 PEDIDO A COCINA</h2>
-          <div class="info">
-            <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? (index + 1)}</p>
-            <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? (index + 1)}</p>
-            <p><strong>Cliente:</strong> ${v.cliente || "Sin nombre"}</p>
-            <p><strong>Hora:</strong> ${v.fecha || "Sin hora"}</p>
-            <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
-            ${v.observaciones ? `<p><strong>Observaciones:</strong> ${v.observaciones}</p>` : ""}
-          </div>
-          <ul>${Object.entries(resumen).map(([producto, cantidad]) => `<li>${producto} x${cantidad}</li>`).join("")}</ul>
-          <p style="text-align:center;margin-top:10px;">👨‍🍳 Preparar con cuidado</p>
-          <script>window.print();<\/script>
-        </body></html>`;
-      const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
-    }
-
-    function editarVenta(index) {
-      if(!isAdmin()){ alert("Solo el Administrador puede editar ventas."); return; }
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-      const venta = ventas[index];
-      if (!venta) return alert("Venta no encontrada.");
-      document.getElementById("cliente").value = venta.cliente;
-      document.getElementById("formaPago").value = venta.formaPago;
-      document.getElementById("tipoPedido").value = venta.tipoPedido;
-      document.getElementById("observaciones").value = venta.observaciones || "";
-      pedido = [...(venta.pedido||[])]; total = venta.total||0; actualizarVistaPedido();
-      comandaEnEdicion = venta.comanda ?? null;
-      ventas.splice(index, 1); localStorage.setItem("ventas", JSON.stringify(ventas));
-      mostrarVentas();
-      alert("Venta cargada para edición. Haz los cambios y presiona 'Guardar Venta'.");
-    }
-
-    function obtenerSiguienteComanda() {
-      const key = "ultimoNumeroComanda";
-      const ultimo = parseInt(localStorage.getItem(key) || "0", 10);
-      const siguiente = ultimo + 1;
-      localStorage.setItem(key, String(siguiente));
-      return siguiente;
-    }
-
-    function borrarVentas(){
-      if(!isAdmin()){ alert("Solo el Administrador puede borrar ventas."); return; }
-      if(confirm("¿Seguro que deseas borrar TODAS las ventas del día?")) {
-        localStorage.removeItem("ventas");
-        mostrarVentas();
-        alert("Ventas borradas.");
-      }
-    }
-    function generarResumenProductos(){
-      if(!isAdmin()){ alert("Solo el Administrador puede ver resumen de productos."); return; }
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
+    ventas.forEach((v, i) => {
       const resumen = {};
-      ventas.forEach(v=> (v.pedido||[]).forEach(p=> resumen[p.nombre]=(resumen[p.nombre]||0)+1 ));
-      const ul = document.getElementById('listaResumen');
-      ul.innerHTML = Object.entries(resumen).map(([n,c])=>`<li>${n}: ${c}</li>`).join('');
-      document.getElementById('resumenProductos').classList.remove('hidden');
-    }
+      (v.pedido || []).forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
+      const productosResumen = Object.entries(resumen).map(([prod, cant]) => `${prod}: ${cant}`).join("<br>");
 
-    /**********  INIT **********/
-    window.addEventListener('load', async () => {
-      ensureUsersInitLocal();
-      const user = getSessionUser();
-      if(!user) showLoginModal(); else hideLoginModal();
-      applyRoleUI();
-      renderUsersTable();
+      contenedor.innerHTML += `
+        <tr>
+          <td class='border p-1'>${v.comanda ?? (i + 1)}</td>
+          <td class='border p-1'>${v.fecha || ''}</td>
+          <td class='border p-1'>${v.cliente || ''}</td>
+          <td class='border p-1'>${v.formaPago || ''}</td>
+          <td class='border p-1'>${v.tipoPedido || ''}</td>
+          <td class='border p-1'>${productosResumen}</td>
+          <td class='border p-1'>${fmtMoney(Number(v.total || 0))}</td>
+          <td class='border p-1 space-x-1'>
+            <button onclick="imprimirVentaCliente(${i})" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">🧾 Cliente</button>
+            <button onclick="imprimirVentaCocina(${i})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">👨‍🍳 Cocina</button>
+            ${ admin ? `<button onclick="editarVenta(${i})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">📝 Editar</button>` : ``}
+          </td>
+        </tr>`;
+    });
+  };
+
+  window.filtrarVentasPorCliente = function() {
+    const filtro = (document.getElementById("filtroCliente").value || '').toLowerCase();
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
+    const contenedor = document.getElementById("ventasGuardadas");
+    const admin = isAdmin();
+    contenedor.innerHTML = "";
+
+    ventas.forEach((v, i) => {
+      if (!(v.cliente || '').toLowerCase().includes(filtro)) return;
+      const resumen = {};
+      (v.pedido || []).forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
+      const productosResumen = Object.entries(resumen).map(([prod, cant]) => `${prod}: ${cant}`).join("<br>");
+
+      contenedor.innerHTML += `
+        <tr>
+          <td class='border p-1'>${v.comanda ?? (i + 1)}</td>
+          <td class='border p-1'>${v.fecha || ''}</td>
+          <td class='border p-1'>${v.cliente || ''}</td>
+          <td class='border p-1'>${v.formaPago || ''}</td>
+          <td class='border p-1'>${v.tipoPedido || ''}</td>
+          <td class='border p-1'>${productosResumen}</td>
+          <td class='border p-1'>${fmtMoney(Number(v.total || 0))}</td>
+          <td class='border p-1 space-x-1'>
+            <button onclick="imprimirVentaCliente(${i})" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">🧾 Cliente</button>
+            <button onclick="imprimirVentaCocina(${i})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">👨‍🍳 Cocina</button>
+            ${ admin ? `<button onclick="editarVenta(${i})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">📝 Editar</button>` : ``}
+          </td>
+        </tr>`;
+    });
+  };
+
+  /**********  EXPORTAR / CIERRE / IMPRESIÓN **********/
+  window.exportarVentasExcelConEstilo = async function(){
+    if(!isAdmin()){ alert("Solo el Administrador puede exportar a Excel."); return; }
+    let ventas = [];
+    try { ventas = await cargarVentasDesdeFirestore(); }
+    catch { ventas = JSON.parse(localStorage.getItem("ventas") || "[]"); }
+    if (ventas.length === 0) return alert("No hay ventas registradas.");
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Ventas del Día");
+    const headers = ["#", "Fecha", "Cliente", "Forma de Pago", "Tipo de Pedido", "Producto", "Precio (COP)", "Total Venta (COP)"];
+    sheet.addRow(headers);
+    let totalGlobal = 0; const conteoProductos = {};
+    ventas.forEach((venta, i) => {
+      const { fecha, cliente, formaPago, tipoPedido, total, pedido } = venta;
+      totalGlobal += parseFloat(total) || 0;
+      (pedido || []).forEach(producto => {
+        sheet.addRow([venta.comanda ?? (i + 1), fecha, cliente, formaPago, tipoPedido, producto.nombre, parseFloat(producto.precio), parseFloat(total)]);
+        conteoProductos[producto.nombre] = (conteoProductos[producto.nombre] || 0) + 1;
+      });
+    });
+    sheet.getRow(1).eachCell(c => { c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FF1F4E78"}}; c.font={color:{argb:"FFFFFFFF"},bold:true}; c.alignment={vertical:"middle",horizontal:"center"}; c.border={top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}}; });
+    for(let r=2;r<=sheet.rowCount;r++){ const row=sheet.getRow(r); const even=r%2===0; row.eachCell(c=>{c.fill={type:"pattern",pattern:"solid",fgColor:{argb: even ? "FFF2F2F2":"FFFFFFFF"}}; c.border={top:{style:"thin"},bottom:{style:"thin"},left:{style:"thin"},right:{style:"thin"}};}); row.getCell(7).numFmt='"$"#,##0'; row.getCell(8).numFmt='"$"#,##0';}
+    sheet.addRow([]); const totalRow = sheet.addRow(["","","","","","TOTAL DEL DÍA:","",totalGlobal]); totalRow.getCell(8).numFmt='"$"#,##0'; totalRow.font={bold:true};
+    let prodMas="", max=0; for(const [prod,c] of Object.entries(conteoProductos)){ if(c>max){max=c;prodMas=prod;} }
+    sheet.addRow(["","","","","","Producto más vendido:","",`${prodMas} (${max})`]).font={italic:true};
+    sheet.columns.forEach(col => col.width = 18);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url;
+    const d = new Date(); a.download = `Ventas_del_día_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.xlsx`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  };
+
+  window.cierreDeCaja = function(){
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
+    const base = getBaseCajaLocal();
+
+    const sumRec = {}, sumDev = {}, sumNet = {}, finalCounts = {};
+    let montoRec=0, montoDev=0, montoNet=0, montoBase=0, montoFinal=0;
+
+    DENOMS.forEach(d=>{sumRec[d]=0; sumDev[d]=0; sumNet[d]=0; finalCounts[d]=0;});
+
+    ventas.forEach(v=>{
+      DENOMS.forEach(d=>{
+        sumRec[d]+= (v.billetesRecibidos?.[d]||0);
+        sumDev[d]+= (v.billetesDevueltos?.[d]||0);
+      });
+    });
+
+    DENOMS.forEach(d=>{
+      sumNet[d]= sumRec[d]-sumDev[d];
+      const baseCnt = base?.counts?.[d] || 0;
+      finalCounts[d] = baseCnt + sumNet[d];
+
+      montoRec  += sumRec[d]*parseInt(d,10);
+      montoDev  += sumDev[d]*parseInt(d,10);
+      montoNet  += sumNet[d]*parseInt(d,10);
+      montoBase += baseCnt*parseInt(d,10);
+      montoFinal+= finalCounts[d]*parseInt(d,10);
+    });
+
+    const html = `
+      <html><head><title>Cierre de Caja</title><style>
+        body { font-family: monospace; font-size: 12px; width: 76mm; padding: 10px 12px; margin: 0; }
+        h2 { text-align: center; font-size: 18px; margin: 8px 0; font-weight: bold; }
+        .line { border-top: 1px dashed #000; margin: 8px 0; }
+        table { width:100%; border-collapse: collapse; }
+        th,td{ padding:4px 2px; text-align:right; }
+        th:first-child,td:first-child{text-align:left;}
+        .totales p{ margin:3px 0; font-weight:bold; }
+        .foot{ text-align:center; margin-top:10px; }
+      </style></head><body>
+        <h2>CIERRE DE CAJA</h2>
+        <p>Fecha: ${new Date().toLocaleString()}</p>
+        <div class="line"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Denom</th>
+              <th>Base</th>
+              <th>Rec</th>
+              <th>Dev</th>
+              <th>Neto</th>
+              <th>Final</th>
+              <th>$ Final</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${DENOMS.map(d=>{
+              const baseCnt = base?.counts?.[d] || 0;
+              const rec = sumRec[d], dev = sumDev[d], net = sumNet[d], fin = finalCounts[d];
+              const montoFin = fin * parseInt(d,10);
+              return `<tr>
+                <td>${parseInt(d,10).toLocaleString('es-CO')}</td>
+                <td>${baseCnt}</td>
+                <td>${rec}</td>
+                <td>${dev}</td>
+                <td>${net}</td>
+                <td>${fin}</td>
+                <td>${fmtMoney(montoFin)}</td>
+              </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+        <div class="line"></div>
+        <div class="totales">
+          <p>Base de Caja: ${fmtMoney(montoBase)} ${base ? `(${base.usuario} - ${base.hora})` : '(no registrada)'}</p>
+          <p>Efectivo Recibido Ventas: ${fmtMoney(montoRec)}</p>
+          <p>Efectivo Devuelto: ${fmtMoney(montoDev)}</p>
+          <p>Neto por Ventas: ${fmtMoney(montoNet)}</p>
+          <p>Total Esperado en Caja (Base + Neto): ${fmtMoney(montoFinal)}</p>
+        </div>
+        <div class="line"></div>
+        <p class="foot">Gracias. — Señor Arepa</p>
+        <script>window.print();<\/script>
+      </body></html>`;
+    const w = window.open("", "_blank", "width=460,height=720"); w.document.write(html); w.document.close(); w.focus();
+  };
+
+  window.imprimirUltimaCocinero = function() {
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
+    if (ventas.length === 0) return alert("No hay ventas para imprimir.");
+    const ultimaVenta = ventas[ventas.length - 1];
+    if (!ultimaVenta.pedido || !Array.isArray(ultimaVenta.pedido)) return alert("La última venta no tiene productos válidos.");
+    const resumen = {}; ultimaVenta.pedido.forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
+    const contenido = `
+      <!DOCTYPE html><html><head><style>
+        body{font-family:monospace;font-size:15px;margin:0;padding:11px;}
+        h2{text-align:center;font-size:19px;margin-bottom:11px;}
+        .info{margin-bottom:10px;} .info p{margin:2px 0;}
+        ul{list-style:none;padding:0;margin:0;} li{padding:4px 0;border-bottom:2px dashed #000;font-size:19px;}
+      </style></head><body>
+        <h2>🧾 PEDIDO A COCINA</h2>
+        <div class="info">
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${ultimaVenta.comanda ?? ventas.length}</p>
+          <p><strong>Cliente:</strong> ${ultimaVenta.cliente || "Sin nombre"}</p>
+          <p><strong>Hora:</strong> ${ultimaVenta.fecha || "Sin hora"}</p>
+          <p><strong>Tipo de Pedido:</strong> ${ultimaVenta.tipoPedido || "-"}</p>
+          ${ultimaVenta.observaciones ? `<p><strong>Observaciones:</strong> ${ultimaVenta.observaciones}</p>` : ""}
+        </div>
+        <ul>${Object.entries(resumen).map(([producto, cantidad]) => `<li>${producto} x${cantidad}</li>`).join("")}</ul>
+        <p style="text-align:center;margin-top:10px;">👨‍🍳 Preparar con cuidado</p>
+        <script>window.print();<\/script>
+      </body></html>`;
+    const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+  };
+
+  window.imprimirUltimaCliente = function() {
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
+    if (ventas.length === 0) return alert("No hay ventas para imprimir.");
+    const v = ventas[ventas.length - 1]; const obs = v.observaciones || "";
+    let contenido = `
+      <html><head><title>Recibo Cliente</title><style>
+        body{font-family:monospace;font-size:14px;width:58mm;padding:10px 12px;margin:0;line-height:1.5;}
+        h2{text-align:center;font-size:19px;margin:14px 0 5px;font-weight:bold;}
+        .sub-info{text-align:center;font-size:12px;margin-bottom:10px;line-height:1.3;}
+        .line{border-top:1px dashed #000;margin:9px 0;} ul{list-style:none;padding:0;margin:0;} li{margin-bottom:7px;}
+        .total{text-align:right;font-weight:bold;margin-top:14px;font-size:16px;} .info p{margin:6px 0;} .info strong{font-weight:bold;}
+        p.thanks{text-align:center;margin-top:22px;font-weight:bold;font-size:15px;}
+      </style></head><body>
+        <h2>SEÑOR AREPA</h2>
+        <div class="sub-info">Matrícula No 289546<br>CALLE 19#25-03 ESQUINA<br>BARRIO SAN JOSÉ, ARMENIA</div>
+        <div class="line"></div>
+        <div class="info">
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? ventas.length}</p>
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? ventas.length}</p>
+          <p><strong>Cliente:</strong> ${v.cliente || "N/A"}</p>
+          <p><strong>Fecha:</strong> ${v.fecha}</p>
+          <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
+          ${obs ? `<p><strong>Observaciones:</strong> ${obs}</p>` : ""}
+        </div>
+        <div class="line"></div>
+        <ul>${(v.pedido||[]).map(p => `<li>${p.nombre} - ${fmtMoney(p.precio)}</li>`).join("")}</ul>
+        <div class="line"></div>
+        <p class="total">Total: ${fmtMoney(v.total || 0)}</p>
+        <div class="line"></div>
+        <p class="thanks">¡Gracias por su compra!</p>
+        <script>window.print();<\/script>
+      </body></html>`;
+    const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+  };
+  window.imprimirVentaCliente = function(index){
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]"); const v = ventas[index]; if (!v) return alert("Venta no encontrada.");
+    let contenido = `
+      <html><head><title>Recibo Cliente</title><style>
+        body{font-family:monospace;font-size:14px;width:58mm;padding:10px 12px;margin:0;line-height:1.5;}
+        h2{text-align:center;font-size:19px;margin:14px 0;font-weight:bold;}
+        .line{border-top:1px dashed #000;margin:9px 0;} ul{list-style:none;padding:0;margin:0;} li{margin-bottom:7px;}
+        .total{text-align:right;font-weight:bold;margin-top:14px;font-size:16px;} .info p{margin:6px 0;} .info strong{font-weight:bold;}
+        p.thanks{text-align:center;margin-top:22px;font-weight:bold;font-size:15px;}
+      </style></head><body>
+        <h2>SEÑOR AREPA</h2>
+        <div class="line"></div>
+        <div class="info">
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? (index + 1)}</p>
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? (index + 1)}</p>
+          <p><strong>Cliente:</strong> ${v.cliente || "N/A"}</p>
+          <p><strong>Fecha:</strong> ${v.fecha}</p>
+          <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
+          ${v.observaciones ? `<p><strong>Observaciones:</strong> ${v.observaciones}</p>` : ""}
+        </div>
+        <div class="line"></div>
+        <ul>${(v.pedido||[]).map(p => `<li>${p.nombre} - ${fmtMoney(p.precio)}</li>`).join("")}</ul>
+        <div class="line"></div>
+        <p class="total">Total: ${fmtMoney(v.total || 0)}</p>
+        <div class="line"></div>
+        <p class="thanks">¡Gracias por su compra!</p>
+        <script>window.print();<\/script>
+      </body></html>`;
+    const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+  };
+  window.imprimirVentaCocina = function(index){
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]"); const v = ventas[index]; if (!v) return alert("Venta no encontrada.");
+    const resumen = {}; (v.pedido||[]).forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
+    const contenido = `
+      <html><head><title>Pedido Cocina</title><style>
+        body{font-family:monospace;font-size:15px;margin:0;padding:11px;}
+        h2{text-align:center;font-size:19px;margin-bottom:11px;}
+        .info{margin-bottom:10px;} .info p{margin:2px 0;}
+        ul{list-style:none;padding:0;margin:0;} li{padding:4px 0;border-bottom:2px dashed #000;font-size:19px;}
+      </style></head><body>
+        <h2>🧾 PEDIDO A COCINA</h2>
+        <div class="info">
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? (index + 1)}</p>
+          <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? (index + 1)}</p>
+          <p><strong>Cliente:</strong> ${v.cliente || "Sin nombre"}</p>
+          <p><strong>Hora:</strong> ${v.fecha || "Sin hora"}</p>
+          <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
+          ${v.observaciones ? `<p><strong>Observaciones:</strong> ${v.observaciones}</p>` : ""}
+        </div>
+        <ul>${Object.entries(resumen).map(([producto, cantidad]) => `<li>${producto} x${cantidad}</li>`).join("")}</ul>
+        <p style="text-align:center;margin-top:10px;">👨‍🍳 Preparar con cuidado</p>
+        <script>window.print();<\/script>
+      </body></html>`;
+    const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+  };
+
+  window.editarVenta = function(index) {
+    if(!isAdmin()){ alert("Solo el Administrador puede editar ventas."); return; }
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
+    const venta = ventas[index];
+    if (!venta) return alert("Venta no encontrada.");
+    document.getElementById("cliente").value = venta.cliente || '';
+    document.getElementById("formaPago").value = venta.formaPago || '';
+    document.getElementById("tipoPedido").value = venta.tipoPedido || '';
+    document.getElementById("observaciones").value = venta.observaciones || "";
+    pedido = [...(venta.pedido||[])]; total = venta.total || 0; actualizarVistaPedido();
+    comandaEnEdicion = venta.comanda ?? null;
+    ventas.splice(index, 1); localStorage.setItem("ventas", JSON.stringify(ventas));
+    mostrarVentas();
+    alert("Venta cargada para edición. Haz los cambios y presiona 'Guardar Venta'.");
+  };
+
+  function obtenerSiguienteComanda() {
+    const key = "ultimoNumeroComanda";
+    const ultimo = parseInt(localStorage.getItem(key) || "0", 10);
+    const siguiente = ultimo + 1;
+    localStorage.setItem(key, String(siguiente));
+    return siguiente;
+  }
+
+  /**********  UTILIDADES EXTRA **********/
+  window.borrarVentas = function(){
+    if(!isAdmin()){ alert("Solo el Administrador puede borrar ventas."); return; }
+    if(confirm("¿Seguro que deseas borrar TODAS las ventas del día?")) {
+      localStorage.removeItem("ventas");
       mostrarVentas();
-      if(user) await cargarTodoDesdeFirestore(user.businessId);
-    });
+      alert("Ventas borradas (local).");
+    }
+  };
+  window.generarResumenProductos = function(){
+    if(!isAdmin()){ alert("Solo el Administrador puede ver resumen de productos."); return; }
+    const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
+    const resumen = {};
+    ventas.forEach(v=> (v.pedido||[]).forEach(p=> resumen[p.nombre]=(resumen[p.nombre]||0)+1 ));
+    const ul = document.getElementById('listaResumen');
+    ul.innerHTML = Object.entries(resumen).map(([n,c])=>`<li>${n}: ${c}</li>`).join('');
+    document.getElementById('resumenProductos').classList.remove('hidden');
+  };
 
-    /** Exponer funciones al scope global para los onclick **/
-    Object.assign(window, {
-      // auth/ui
-      loginFromModal, logout, addUserFromForm, deleteUser,
-      // ventas
-      agregarProducto, quitarProducto, guardarVenta, imprimirUltimaCocinero, imprimirUltimaCliente,
-      imprimirVentaCliente, imprimirVentaCocina, editarVenta, filtrarVentasPorCliente,
-      // base caja
-      abrirModalBaseCaja, cerrarModalBaseCaja, confirmarBaseCaja,
-      // efectivo / vuelto
-      abrirModalEfectivo, cerrarModalEfectivo, confirmarEfectivoRecibido, onCambioFormaPago,
-      abrirModalVuelto, cerrarModalVuelto, confirmarVuelto,
-      // gastos
-      abrirModalGasto, cerrarModalGasto, confirmarGasto,
-      // otros
-      exportarVentasExcelConEstilo, borrarVentas, generarResumenProductos, cierreDeCaja
-    });
+  /**********  INIT **********/
+  window.onload = async function(){
+    ensureUsersInit();
+    getOrInitBusinessId(); // garantiza businessId
+    const user = getSessionUser();
+    if(!user) showLoginModal(); else hideLoginModal();
+    applyRoleUI();
+    renderUsersTable();
+    try { await mostrarVentas(); } catch { mostrarVentas(); }
+    if(user) autoPromptBaseIfMissing();
+  };
+
   </script>
 </body>
 </html>
