@@ -808,9 +808,18 @@
       await addDoc(collection(db, 'users', user?.username || 'anon', 'gastos'), { ...payload, createdAt: serverTimestamp() });
       return res;
     }
-    async function confirmarGasto() {
+
+    /* ==== CORREGIDO: confirmarGasto expuesto en window ==== */
+    window.confirmarGasto = async function () {
       const desc = document.getElementById('gastoDescripcion').value.trim();
       const gastoTotal = parseInt(document.getElementById('gastoTotal').value || '0', 10) || 0;
+
+      // Sembrar baseCounts con la base local actual antes de restar (evita inconsistencias)
+      const baseLocal = getBaseCajaLocal();
+      if (baseLocal && baseLocal.counts) {
+        DENOMS.forEach(d => { baseCounts[d] = baseLocal.counts[d] || 0; });
+      }
+
       let pagadoEfectivo = 0; DENOMS.forEach(d=> pagadoEfectivo += (gastoCounts[d]||0)*parseInt(d,10));
       if (!desc) return alert('Escribe la descripción del gasto.');
       if (gastoTotal <= 0) return alert('Escribe el total del gasto.');
@@ -847,7 +856,7 @@
       } catch(e){
         console.warn('save gasto cloud err:', e);
       }
-      // Local mirror para fallback
+      // Fallback local
       const gl = JSON.parse(localStorage.getItem('gastos') || '[]');
       gl.push({ ...payload, createdAt: Date.now() });
       localStorage.setItem('gastos', JSON.stringify(gl));
@@ -856,7 +865,7 @@
       cerrarModalGasto();
       updateBaseBadge();
       mostrarVentas(); // refrescar tabla combinada
-    }
+    };
 
     /********** PEDIDOS **********/
     window.agregarProducto = (nombre, precio) => {
@@ -1014,7 +1023,7 @@
       // ordenar por createdAt desc (fallback por fecha texto)
       items.sort((a,b) => tsKey(b.createdAt) - tsKey(a.createdAt));
 
-      // cache para acciones por índice (impresión)
+      // cache para acciones por índice (impresión/filtrado)
       localStorage.setItem("ventasTabla", JSON.stringify(items));
 
       items.forEach((v, i) => {
