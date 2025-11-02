@@ -221,7 +221,7 @@
     </div>
   </main>
 
-  <!-- MODAL: Vuelto (estilo base caja) -->
+  <!-- MODAL: Vuelto -->
   <div id="modalVuelto" class="fixed inset-0 bg-black/50 hidden z-50 items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
       <!-- Izquierda -->
@@ -277,7 +277,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Efectivo Recibido (igual estilo) -->
+  <!-- MODAL: Efectivo Recibido -->
   <div id="modalEfectivo" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
       <!-- Izquierda -->
@@ -303,7 +303,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Compras / Pagos (estilo base) -->
+  <!-- MODAL: Compras / Pagos -->
   <div id="modalGasto" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
       <!-- Izquierda -->
@@ -422,7 +422,6 @@
       const found = users.find(x => x.username === u && x.password === p);
       if(!found){ alert("Usuario o contraseña incorrectos."); return false; }
       setSessionUser({ username: found.username, role: found.role });
-      // perfil users/{username}
       upsertUserProfile(found.username, found.role).catch(e=>console.warn('upsertUserProfile err:', e));
       hideLoginModal();
       applyRoleUI();
@@ -511,7 +510,7 @@
       catch { return `$${(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`; }
     }
 
-    /********** BASE DE CAJA (Local view + Firestore) **********/
+    /********** BASE DE CAJA **********/
     function getBaseCajaLocal() {
       const data = JSON.parse(localStorage.getItem('baseCaja') || 'null');
       if(!data) return null;
@@ -562,12 +561,11 @@
         createdAt: serverTimestamp()
       };
       await setDoc(ref, data, { merge: true });
-      // espejo por usuario
       const uref = doc(collection(db, 'users', user?.username || 'anon', 'bases'), id);
       await setDoc(uref, data, { merge: true });
     }
 
-    /********** BOTONERAS DE EFECTIVO (reutilizable) **********/
+    /********** BOTONERAS EFECTIVO **********/
     function buildMoneyButton(containerId, stateMap, totalLabelId) {
       const cont = document.getElementById(containerId);
       cont.innerHTML = '';
@@ -620,7 +618,7 @@
       }
     }
 
-    /********** MODALES ABRIR/CERRAR **********/
+    /********** MODALES **********/
     window.abrirModalBaseCaja = (auto=false) => {
       const m = document.getElementById('modalBaseCaja');
       m.classList.remove('hidden'); m.classList.add('flex');
@@ -803,18 +801,14 @@
     async function guardarGastoEnFirestore(payload) {
       const col = collection(db, 'gastos');
       const res = await addDoc(col, { ...payload, createdAt: serverTimestamp() });
-      // espejo por usuario
       const user = getSessionUser();
       await addDoc(collection(db, 'users', user?.username || 'anon', 'gastos'), { ...payload, createdAt: serverTimestamp() });
       return res;
     }
-
-    /* ==== CORREGIDO: confirmarGasto expuesto en window ==== */
     window.confirmarGasto = async function () {
       const desc = document.getElementById('gastoDescripcion').value.trim();
       const gastoTotal = parseInt(document.getElementById('gastoTotal').value || '0', 10) || 0;
 
-      // Sembrar baseCounts con la base local actual antes de restar (evita inconsistencias)
       const baseLocal = getBaseCajaLocal();
       if (baseLocal && baseLocal.counts) {
         DENOMS.forEach(d => { baseCounts[d] = baseLocal.counts[d] || 0; });
@@ -824,7 +818,6 @@
       if (!desc) return alert('Escribe la descripción del gasto.');
       if (gastoTotal <= 0) return alert('Escribe el total del gasto.');
 
-      // Descontar de base local
       DENOMS.forEach(d => {
         const curr = baseCounts[d] || 0;
         const resta = gastoCounts[d] || 0;
@@ -838,7 +831,6 @@
         console.warn('save base cloud err:', e);
       }
 
-      // Guardar gasto
       const businessId = getOrInitBusinessId();
       const user = getSessionUser();
       const payload = {
@@ -851,12 +843,7 @@
         usuario: user?.username || 'N/A',
         tipo: 'gasto'
       };
-      try {
-        await guardarGastoEnFirestore(payload);
-      } catch(e){
-        console.warn('save gasto cloud err:', e);
-      }
-      // Fallback local
+      try { await guardarGastoEnFirestore(payload); } catch(e){ console.warn('save gasto cloud err:', e); }
       const gl = JSON.parse(localStorage.getItem('gastos') || '[]');
       gl.push({ ...payload, createdAt: Date.now() });
       localStorage.setItem('gastos', JSON.stringify(gl));
@@ -864,7 +851,7 @@
       alert('Gasto registrado.');
       cerrarModalGasto();
       updateBaseBadge();
-      mostrarVentas(); // refrescar tabla combinada
+      mostrarVentas();
     };
 
     /********** PEDIDOS **********/
@@ -893,9 +880,7 @@
     }
     window.toggleEfectivoSection = () => {
       const forma = document.getElementById("formaPago").value;
-      if (forma === 'Efectivo') {
-        // modal ya se abre en onchange
-      }
+      if (forma === 'Efectivo') { /* el modal ya se abre en onchange */ }
     };
     function getEfectivoRecibidoFromState() {
       const recibidos = {}; let totalRec = 0;
@@ -919,7 +904,6 @@
     async function guardarVentaEnFirestore(venta) {
       const col = collection(db, 'ventas');
       const res = await addDoc(col, { ...venta, createdAt: serverTimestamp() });
-      // espejo por usuario
       const user = getSessionUser();
       await addDoc(collection(db, 'users', user?.username || 'anon', 'ventas'), { ...venta, createdAt: serverTimestamp() });
       return res;
@@ -977,9 +961,8 @@
       const rp = document.getElementById("resumenProductos"); if (rp) rp.classList.add("hidden");
     };
 
-    /********** LISTADO / ACCIONES (Firestore: ventas + gastos) **********/
+    /********** LISTADO / ACCIONES (ventas + gastos) **********/
     function tsKey(d) {
-      // convierte Timestamp o número a milisegundos para ordenar
       if (!d) return 0;
       if (typeof d === 'number') return d;
       if (d.seconds !== undefined) return d.seconds * 1000 + Math.floor((d.nanoseconds || 0)/1e6);
@@ -1020,10 +1003,7 @@
         items = [...ventasLS, ...gastosLS];
       }
 
-      // ordenar por createdAt desc (fallback por fecha texto)
       items.sort((a,b) => tsKey(b.createdAt) - tsKey(a.createdAt));
-
-      // cache para acciones por índice (impresión/filtrado)
       localStorage.setItem("ventasTabla", JSON.stringify(items));
 
       items.forEach((v, i) => {
@@ -1046,7 +1026,7 @@
         const totalTxt = isGasto ? `- ${fmtMoney(v.total || v.pagadoEfectivo || 0)}` : `${fmtMoney(v.total || 0)}`;
 
         const acciones = isGasto
-          ? `<span class="text-xs text-gray-400">—</span>`
+          ? `<button onclick="imprimirGasto(${i})" class="bg-rose-600 text-white px-2 py-1 rounded text-xs">🧾 Gasto</button>`
           : `
             <button onclick="imprimirVentaCliente(${i})" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">🧾 Cliente</button>
             <button onclick="imprimirVentaCocina(${i})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">👨‍🍳 Cocina</button>
@@ -1101,7 +1081,7 @@
         const totalTxt = isGasto ? `- ${fmtMoney(v.total || v.pagadoEfectivo || 0)}` : `${fmtMoney(v.total || 0)}`;
 
         const acciones = isGasto
-          ? `<span class="text-xs text-gray-400">—</span>`
+          ? `<button onclick="imprimirGasto(${i})" class="bg-rose-600 text-white px-2 py-1 rounded text-xs">🧾 Gasto</button>`
           : `
             <button onclick="imprimirVentaCliente(${i})" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">🧾 Cliente</button>
             <button onclick="imprimirVentaCocina(${i})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">👨‍🍳 Cocina</button>
@@ -1237,7 +1217,7 @@
       const w = window.open("", "_blank", "width=460,height=720"); w.document.write(html); w.document.close(); w.focus();
     };
 
-    /********** IMPRESIONES (usan ventasTabla para index) **********/
+    /********** IMPRESIONES **********/
     window.imprimirUltimaCocinero = () => {
       const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
       if (ventas.length === 0) return alert("No hay ventas para imprimir.");
@@ -1359,6 +1339,49 @@
       const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
     };
 
+    /* ===== NUEVO: IMPRIMIR GASTO ===== */
+    window.imprimirGasto = (index) => {
+      const items = JSON.parse(localStorage.getItem("ventasTabla") || "[]");
+      const g = items[index];
+      if (!g || g.tipo !== 'gasto') return alert("No se encontró el gasto.");
+      const desglose = DENOMS
+        .filter(d => (g.billetesUsados?.[d] || 0) > 0)
+        .map(d => {
+          const cnt = g.billetesUsados[d] || 0;
+          const val = parseInt(d,10);
+          return `${cnt} x ${val.toLocaleString('es-CO')} = ${fmtMoney(cnt*val)}`;
+        }).join("<br>");
+
+      const saldoPend = Math.max(0, (parseInt(g.total||0) - parseInt(g.pagadoEfectivo||0)));
+      const contenido = `
+        <html><head><title>Comprobante de Gasto</title><style>
+          body{font-family:monospace;font-size:14px;width:58mm;padding:10px 12px;margin:0;line-height:1.5;}
+          h2{text-align:center;font-size:18px;margin:8px 0;font-weight:bold;}
+          .line{border-top:1px dashed #000;margin:9px 0;}
+          .info p{margin:4px 0;} .tot{font-weight:bold;text-align:right;}
+          .muted{color:#555;} .small{font-size:12px;}
+        </style></head><body>
+          <h2>COMPROBANTE DE GASTO</h2>
+          <div class="small muted" style="text-align:center;">SEÑOR AREPA · ${new Date().toLocaleDateString()}</div>
+          <div class="line"></div>
+          <div class="info">
+            <p><strong>Descripción:</strong> ${g.descripcion || '-'}</p>
+            <p><strong>Usuario:</strong> ${g.usuario || '-'}</p>
+            <p><strong>Fecha:</strong> ${g.fecha || '-'}</p>
+          </div>
+          <div class="line"></div>
+          <p><strong>Total del gasto:</strong> ${fmtMoney(g.total || 0)}</p>
+          <p><strong>Pagado en efectivo:</strong> ${fmtMoney(g.pagadoEfectivo || 0)}</p>
+          ${desglose ? `<div class="line"></div><div class="small"><strong>Desglose efectivo:</strong><br>${desglose}</div>` : ``}
+          ${saldoPend>0 ? `<div class="line"></div><p class="tot">Saldo pendiente: ${fmtMoney(saldoPend)}</p>` : ``}
+          <div class="line"></div>
+          <p style="text-align:center;">Gracias.</p>
+          <script>window.print();<\/script>
+        </body></html>`;
+      const w = window.open("", "_blank", "width=400,height=600");
+      w.document.write(contenido); w.document.close(); w.focus();
+    };
+
     /********** EDITAR / COMANDA **********/
     window.editarVenta = (index) => {
       if(!isAdmin()){ alert("Solo el Administrador puede editar ventas."); return; }
@@ -1367,14 +1390,12 @@
       if (!v) return alert("Elemento no encontrado.");
       if (v.tipo === 'gasto') return alert("Los gastos no se editan desde aquí.");
       const ventasLocal = JSON.parse(localStorage.getItem("ventas") || "[]");
-      // cargar al formulario
       document.getElementById("cliente").value = v.cliente || '';
       document.getElementById("formaPago").value = v.formaPago || '';
       document.getElementById("tipoPedido").value = v.tipoPedido || '';
       document.getElementById("observaciones").value = v.observaciones || "";
       pedido = [...(v.pedido||[])]; total = v.total||0; actualizarVistaPedido();
       comandaEnEdicion = v.comanda ?? null;
-      // quitar de local si existía allí
       const idxLoc = ventasLocal.findIndex(x => (x.fecha===v.fecha && x.cliente===v.cliente && x.total===v.total));
       if (idxLoc >= 0) {
         ventasLocal.splice(idxLoc,1);
