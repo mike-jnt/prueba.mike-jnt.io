@@ -19,7 +19,7 @@
       <img src="imagenes/senora.png"
            alt="Logo Señor Arepa"
            class="w-20 h-20 rounded-full object-cover"
-           onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22><rect width=%2280%22 height=%2280%22 fill=%22%23fde68a%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22Arial%22 font-size=%2210%22 fill=%22%236b7280%22>Logo</text></svg>';"/>
+           onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22><rect width=%2280%22 height=%2280%22 fill=%22%23fde68a%22/><text x=%2250%25%22 y=%2250%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22Arial%22 font-size=%2210%22 fill=%22%236b7280%22>Logo</text></svg>';"/>
       <span class="text-xl">SEÑOR AREPA</span>
     </div>
     <div class="flex items-center gap-3">
@@ -169,7 +169,7 @@
 
     <!-- Tabla Ventas/Gastos -->
     <div id="ventasSeccion" class="mt-8 bg-white p-4 rounded-xl shadow-md">
-      <h3 class="text-lg font-semibold mb-2">Movimientos del Usuario</h3>
+      <h3 class="text-lg font-semibold mb-2">Movimientos</h3>
       <div class="mb-4">
         <input type="text" id="filtroCliente" oninput="filtrarVentasPorCliente()" placeholder="🔍 Filtrar por cliente, descripción o usuario..." class="w-full md:w-1/3 p-2 border border-yellow-300 rounded" />
       </div>
@@ -444,19 +444,13 @@
 
       try {
         const userDoc = await getUserDoc(u);
-        if(!userDoc){
-          alert("Usuario no existe.");
-          return false;
-        }
-        if((userDoc.password || '') !== p){
-          alert("Contraseña incorrecta.");
-          return false;
-        }
+        if(!userDoc){ alert("Usuario no existe."); return false; }
+        if((userDoc.password || '') !== p){ alert("Contraseña incorrecta."); return false; }
         setSessionUser({ username: userDoc.username, role: userDoc.role });
         await upsertUserProfile(userDoc.username, userDoc.role); // actualiza timestamps
         hideLoginModal();
         applyRoleUI();
-        await mostrarVentas();  // carga datos del usuario
+        await mostrarVentas();
         autoPromptBaseIfMissing();
       } catch(err){
         console.warn('login err:', err);
@@ -497,8 +491,8 @@
       toggleDisplay('ventasSeccion', true);
       toggleDisplay('resumenProductos', admin);
       toggleDisplay('adminUsuariosSection', admin);
-      toggleDisplay('btnExportarExcel', true); // ambos pueden exportar sus datos
-      toggleDisplay('btnBorrarVentas', admin); // borrar locales (debug)
+      toggleDisplay('btnExportarExcel', true); // ambos pueden exportar
+      toggleDisplay('btnBorrarVentas', admin);
       toggleDisplay('btnResumenProductos', admin);
       toggleDisplay('btnCierreCaja', true);
       toggleDisplay('btnBaseCaja', true);
@@ -571,9 +565,7 @@
         updatedAt: serverTimestamp(),
         createdAt: serverTimestamp()
       };
-      // global por fecha
       await setDoc(doc(collection(db, 'bases'), id), data, { merge: true });
-      // espejo por usuario
       await setDoc(doc(collection(db, 'users', user?.username || 'anon', 'bases'), id), data, { merge: true });
     }
 
@@ -675,10 +667,7 @@
       const meta = document.getElementById('baseMetaInfo');
       meta.textContent = baseHoyInfo ? `Registrada por ${baseHoyInfo.usuario} a las ${baseHoyInfo.hora}.` : `No hay base registrada para hoy (${todayStr()}).`;
     };
-    window.cerrarModalBaseCaja = () => {
-      const m = document.getElementById('modalBaseCaja');
-      m.classList.add('hidden'); m.classList.remove('flex');
-    };
+    window.cerrarModalBaseCaja = () => { const m = document.getElementById('modalBaseCaja'); m.classList.add('hidden'); m.classList.remove('flex'); };
     function updateBaseTotal() {
       let total = 0;
       DENOMS.forEach(d => total += (baseCounts[d] || 0) * parseInt(d, 10));
@@ -704,10 +693,7 @@
       m.classList.remove('hidden'); m.classList.add('flex');
       buildMoneyButton('efDenomsContainer', efCounts, 'efTotalValor');
     };
-    window.cerrarModalEfectivoRecibido = () => {
-      const m = document.getElementById('modalEfectivo');
-      m.classList.add('hidden'); m.classList.remove('flex');
-    };
+    window.cerrarModalEfectivoRecibido = () => { const m = document.getElementById('modalEfectivo'); m.classList.add('hidden'); m.classList.remove('flex'); };
     window.confirmarEfectivoRecibido = () => { cerrarModalEfectivoRecibido(); };
 
     window.abrirModalVuelto = (vuelto) => {
@@ -957,15 +943,26 @@
       const rp = document.getElementById("resumenProductos"); if (rp) rp.classList.add("hidden");
     };
 
-    /********** CARGA DE DATOS (POR USUARIO) **********/
+    /********** CARGA DE DATOS (USER vs ADMIN) **********/
     function tsKey(d) { if (!d) return 0; if (typeof d === 'number') return d; if (d.seconds !== undefined) return d.seconds * 1000 + Math.floor((d.nanoseconds || 0)/1e6); return 0; }
 
+    // Por usuario (subcolecciones)
     async function cargarVentasUsuarioDesdeFirestore(username) {
       const snap = await getDocs(query(collection(db, 'users', username, 'ventas'), orderBy('createdAt','desc')));
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }
     async function cargarGastosUsuarioDesdeFirestore(username) {
       const snap = await getDocs(query(collection(db, 'users', username, 'gastos'), orderBy('createdAt','desc')));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+
+    // Por negocio (admin ve todo) – colecciones globales con businessId
+    async function cargarVentasNegocioDesdeFirestore() {
+      const snap = await getDocs(query(collection(db, 'ventas'), where('businessId','==', getOrInitBusinessId()), orderBy('createdAt','desc')));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+    async function cargarGastosNegocioDesdeFirestore() {
+      const snap = await getDocs(query(collection(db, 'gastos'), where('businessId','==', getOrInitBusinessId()), orderBy('createdAt','desc')));
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }
 
@@ -977,18 +974,36 @@
       const u = getSessionUser()?.username;
       if(!u){ localStorage.setItem("ventasTabla","[]"); return; }
 
+      const admin = isAdmin();
       let items = [];
       try {
-        const [ventasFS, gastosFS] = await Promise.all([
-          cargarVentasUsuarioDesdeFirestore(u),
-          cargarGastosUsuarioDesdeFirestore(u)
-        ]);
+        let ventasFS = [];
+        let gastosFS = [];
+        if (admin) {
+          ventasFS = await cargarVentasNegocioDesdeFirestore();
+          gastosFS = await cargarGastosNegocioDesdeFirestore();
+        } else {
+          ventasFS = await cargarVentasUsuarioDesdeFirestore(u);
+          gastosFS = await cargarGastosUsuarioDesdeFirestore(u);
+        }
         items = [...ventasFS, ...gastosFS];
       } catch(e) {
-        console.warn('Fallo lectura Firestore usuario, uso LocalStorage:', e);
-        const ventasLS = JSON.parse(localStorage.getItem("ventas") || "[]").filter(v => v?.usuario === u);
-        const gastosLS = JSON.parse(localStorage.getItem("gastos") || "[]").filter(g => g?.usuario === u);
-        items = [...ventasLS, ...gastosLS];
+        console.warn('Fallo lectura Firestore, uso LocalStorage:', e);
+        const ventasLS_all = JSON.parse(localStorage.getItem("ventas") || "[]");
+        const gastosLS_all = JSON.parse(localStorage.getItem("gastos") || "[]");
+        if (admin) {
+          // Filtro por businessId si está presente
+          const bid = getOrInitBusinessId();
+          items = [
+            ...ventasLS_all.filter(v => !v.businessId || v.businessId===bid),
+            ...gastosLS_all.filter(g => !g.businessId || g.businessId===bid)
+          ];
+        } else {
+          items = [
+            ...ventasLS_all.filter(v => v?.usuario === u),
+            ...gastosLS_all.filter(g => g?.usuario === u)
+          ];
+        }
       }
 
       items.sort((a,b) => tsKey(b.createdAt) - tsKey(a.createdAt));
@@ -1092,22 +1107,36 @@
 
     /********** EXPORTAR / CIERRE / IMPRESIÓN **********/
     window.exportarVentasExcelConEstilo = async () => {
-      const u = getSessionUser()?.username;
-      if(!u){ alert("Inicia sesión."); return; }
+      const user = getSessionUser();
+      if(!user){ alert("Inicia sesión."); return; }
 
       let ventas = [];
       let gastos = [];
       try {
-        ventas = await cargarVentasUsuarioDesdeFirestore(u);
-      } catch { ventas = JSON.parse(localStorage.getItem("ventas") || "[]").filter(v => v?.usuario === u); }
-      try {
-        gastos = await cargarGastosUsuarioDesdeFirestore(u);
-      } catch { gastos = JSON.parse(localStorage.getItem("gastos") || "[]").filter(g => g?.usuario === u); }
+        if (isAdmin()) {
+          ventas = await cargarVentasNegocioDesdeFirestore();
+          gastos = await cargarGastosNegocioDesdeFirestore();
+        } else {
+          ventas = await cargarVentasUsuarioDesdeFirestore(user.username);
+          gastos = await cargarGastosUsuarioDesdeFirestore(user.username);
+        }
+      } catch {
+        const vLS = JSON.parse(localStorage.getItem("ventas") || "[]");
+        const gLS = JSON.parse(localStorage.getItem("gastos") || "[]");
+        if (isAdmin()) {
+          const bid = getOrInitBusinessId();
+          ventas = vLS.filter(v => !v.businessId || v.businessId===bid);
+          gastos = gLS.filter(g => !g.businessId || g.businessId===bid);
+        } else {
+          ventas = vLS.filter(v => v?.usuario === user.username);
+          gastos = gLS.filter(g => g?.usuario === user.username);
+        }
+      }
 
       if (ventas.length === 0 && gastos.length === 0) return alert("No hay datos para exportar.");
 
       const workbook = new ExcelJS.Workbook();
-      const sheet = workbook.addWorksheet("Ventas del Día");
+      const sheet = workbook.addWorksheet(isAdmin() ? "Ventas (Negocio)" : "Ventas (Usuario)");
 
       const headers = ["#", "Fecha", "Cliente", "Forma de Pago", "Tipo de Pedido", "Producto", "Precio (COP)", "Total Venta (COP)"];
       sheet.addRow(headers);
@@ -1146,7 +1175,9 @@
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url;
-      const d = new Date(); a.download = `Ventas_y_Gastos_${u}_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.xlsx`;
+      const d = new Date();
+      const who = isAdmin() ? "NEGOCIO" : user.username;
+      a.download = `Ventas_y_Gastos_${who}_${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}.xlsx`;
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     };
 
@@ -1194,18 +1225,27 @@
       return all.filter(a => (a.fecha === hoy));
     }
 
-    async function cargarVentasParaCierreUsuario(username){
-      try{
-        return await cargarVentasUsuarioDesdeFirestore(username);
-      }catch{
-        return JSON.parse(localStorage.getItem("ventas") || "[]").filter(v => v?.usuario === username);
+    // Helper ventas para cierre (admin ve negocio completo)
+    async function cargarVentasParaCierre() {
+      if (isAdmin()) {
+        try { return await cargarVentasNegocioDesdeFirestore(); }
+        catch { 
+          const bid = getOrInitBusinessId();
+          return (JSON.parse(localStorage.getItem("ventas") || "[]") || []).filter(v => !v.businessId || v.businessId===bid);
+        }
+      } else {
+        const u = getSessionUser()?.username;
+        try { return await cargarVentasUsuarioDesdeFirestore(u); }
+        catch { 
+          return (JSON.parse(localStorage.getItem("ventas") || "[]") || []).filter(v => v?.usuario === u);
+        }
       }
     }
 
     window.cierreDeCaja = async () => {
-      const u = getSessionUser()?.username;
-      if(!u){ showLoginModal(); return; }
-      const ventas = await cargarVentasParaCierreUsuario(u);
+      const user = getSessionUser();
+      if(!user){ showLoginModal(); return; }
+      const ventas = await cargarVentasParaCierre();
       const base = getBaseCajaLocal();
 
       const sumRec = {}, sumDev = {}, sumNet = {}, finalCounts = {};
@@ -1241,7 +1281,7 @@
         businessId: getOrInitBusinessId(),
         fecha: todayStr(),
         fechaHora: new Date().toLocaleString(),
-        usuarioAdmin: u,
+        usuarioAdmin: user.username,
         base: montoBase,
         efectivoRecibidoVentas: montoRec,
         efectivoDevuelto: montoDev,
@@ -1254,6 +1294,7 @@
           baseCounts: base?.counts || {},
           finalCounts
         },
+        // si es admin, aquí verá arqueos de todos los cajeros del día
         arqueos: (arqueos || []).map(a => ({ usuario: a.usuario || '', hora: a.hora || '', montoReportado: a.montoReportado || 0, nota: a.nota || '' }))
       };
 
@@ -1276,7 +1317,7 @@
         </style></head><body>
           <h2>CIERRE DE CAJA</h2>
           <p>Fecha: ${cierrePayload.fechaHora}</p>
-          <p>Usuario: ${cierrePayload.usuarioAdmin}</p>
+          <p>Usuario: ${cierrePayload.usuarioAdmin} ${isAdmin() ? '(ADMIN - todo el negocio)' : ''}</p>
           <div class="line"></div>
           <table>
             <thead>
@@ -1456,11 +1497,9 @@
       const role     = document.getElementById('newRole').value;
       if(!username || !password) { alert("Usuario y contraseña requeridos."); return false; }
 
-      // Crea/actualiza el doc en Firestore
       try { await upsertUserProfile(username, role, password); }
       catch(e){ console.warn('crear usuario err:', e); alert("No se pudo crear el usuario en la nube."); return false; }
 
-      // Render “tabla de referencia” local (solo visual)
       const tbody = document.getElementById('usuariosTbody');
       if (tbody) {
         const row = document.createElement('tr');
@@ -1480,7 +1519,6 @@
       const tbody = document.getElementById('usuariosTbody');
       if(!tbody) return;
       tbody.innerHTML = "";
-      // Opcional: listar usuarios del negocio
       try{
         const snap = await getDocs(query(collection(db,'users'), where('businessId','==', getOrInitBusinessId())));
         snap.forEach(docu => {
@@ -1507,10 +1545,11 @@
     };
     window.generarResumenProductos = () => {
       if(!isAdmin()){ alert("Solo el Administrador puede ver resumen de productos."); return; }
-      const u = getSessionUser()?.username;
-      const ventas = JSON.parse(localStorage.getItem("ventas") || "[]").filter(v => v?.usuario === u);
+      const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
+      const bid = getOrInitBusinessId();
+      const ventasNegocio = ventas.filter(v => !v.businessId || v.businessId===bid);
       const resumen = {};
-      ventas.forEach(v=> (v.pedido||[]).forEach(p=> resumen[p.nombre]=(resumen[p.nombre]||0)+1 ));
+      ventasNegocio.forEach(v=> (v.pedido||[]).forEach(p=> resumen[p.nombre]=(resumen[p.nombre]||0)+1 ));
       const ul = document.getElementById('listaResumen');
       ul.innerHTML = Object.entries(resumen).map(([n,c])=>`<li>${n}: ${c}</li>`).join('');
       document.getElementById('resumenProductos').classList.remove('hidden');
