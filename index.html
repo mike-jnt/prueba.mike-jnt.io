@@ -19,7 +19,7 @@
       <img src="imagenes/senora.png"
            alt="Logo Señor Arepa"
            class="w-20 h-20 rounded-full object-cover"
-           onerror="this.onerror=null;this.src='https://via.placeholder.com/80?text=Logo';">
+           onerror="this.onerror=null;this.src='imagenes/logo-fallback.png';">
       <span class="text-xl">SEÑOR AREPA</span>
     </div>
     <div class="flex items-center gap-3">
@@ -603,16 +603,9 @@
       DENOMS.forEach(d => total += (stateMap[d] || 0) * parseInt(d, 10));
       const lab = document.getElementById(totalLabelId);
       if (lab) lab.textContent = fmtMoney(total);
-      // Además, si es modal efectivo, mostramos copia en ef_total
       if (totalLabelId === 'efTotalValor') {
         const lbl = document.getElementById('ef_total');
         if (lbl) lbl.textContent = `Efectivo ingresado: ${fmtMoney(total)}`;
-      }
-      if (totalLabelId === 'totalDevueltoLabel') {
-        // nada extra
-      }
-      if (totalLabelId === 'gastoEfectivoValor') {
-        // nada extra
       }
     }
 
@@ -620,10 +613,8 @@
     window.abrirModalBaseCaja = (auto=false) => {
       const m = document.getElementById('modalBaseCaja');
       m.classList.remove('hidden'); m.classList.add('flex');
-      // precarga baseCounts con lo de hoy (si hay)
       const baseHoy = getBaseCajaLocal();
       DENOMS.forEach(d => baseCounts[d] = baseHoy?.counts?.[d] || 0);
-      // render UI
       const cont = document.getElementById('baseDenomsContainer');
       cont.innerHTML = '';
       DENOMS.forEach(denom => {
@@ -675,7 +666,6 @@
       if (v2) v2.textContent = `Total base: ${fmtMoney(total)}`;
     }
     window.confirmarBaseCaja = async () => {
-      // guardar local + firestore
       setBaseCajaLocal(baseCounts);
       try {
         let monto = 0; DENOMS.forEach(d=> monto += (baseCounts[d]||0)*parseInt(d,10));
@@ -698,7 +688,6 @@
       m.classList.add('hidden'); m.classList.remove('flex');
     };
     window.confirmarEfectivoRecibido = () => {
-      // solo cierra; los valores se toman al guardar venta
       cerrarModalEfectivoRecibido();
     };
 
@@ -707,10 +696,8 @@
       const m = document.getElementById('modalVuelto');
       m.classList.remove('hidden'); m.classList.add('flex');
       document.getElementById('vueltoRequeridoTexto').textContent = `Vuelto requerido: ${fmtMoney(vuelto)}`;
-      // reset temporal (usamos un estado aislado)
       const tempVuelto = {};
       DENOMS.forEach(d => tempVuelto[d]=0);
-      // Render botones
       const box = document.getElementById('tablaVueltoUI');
       box.innerHTML = '';
       DENOMS.forEach(denom => {
@@ -745,11 +732,9 @@
           recalc();
         });
 
-        // guardamos el estado temporal en dataset del contenedor para leer luego
         card.dataset.denom = denom;
         card.dataset.count = '0';
 
-        // guardamos el estado al vuelo
         const obs = new MutationObserver(()=>{
           card.dataset.count = String(tempVuelto[denom]||0);
         });
@@ -760,7 +745,6 @@
         card.appendChild(counter);
         box.appendChild(card);
       });
-      // guardamos referencia al estado temporal en el modal para recogerlo
       document.getElementById('modalVuelto').dataset.temp = '1';
       document.getElementById('totalDevueltoLabel').textContent = fmtMoney(0);
     };
@@ -771,13 +755,11 @@
     };
     window.confirmarVuelto = () => {
       if(!ventaTemporal) return alert('No hay venta en proceso.');
-      // leer del UI
       const box = document.getElementById('tablaVueltoUI');
       const temp = {};
       let totalDev = 0;
       Array.from(box.children).forEach(card=>{
         const denom = card.dataset.denom;
-        // contador está en el <span> tipo "xN", pero guardamos con dataset al cambiar
         const count = parseInt((card.querySelector('span')?.textContent || 'x0').replace('x',''),10) || 0;
         temp[denom]=count;
         totalDev += count * parseInt(denom,10);
@@ -786,7 +768,6 @@
         alert(`El total ingresado (${fmtMoney(totalDev)}) no coincide con el vuelto requerido (${fmtMoney(ventaTemporal.vuelto)}).`);
         return;
       }
-      // completar venta
       const venta = { ...ventaTemporal, billetesDevueltos: temp, comanda: comandaEnEdicion ?? obtenerSiguienteComanda() };
       persistirVenta(venta).then(()=>{
         comandaEnEdicion = null; ventaTemporal = null;
@@ -805,7 +786,6 @@
     window.abrirModalGasto = () => {
       const m = document.getElementById('modalGasto');
       m.classList.remove('hidden'); m.classList.add('flex');
-      // reset
       DENOMS.forEach(d=> gastoCounts[d]=0);
       document.getElementById('gastoDescripcion').value = '';
       document.getElementById('gastoTotal').value = '';
@@ -819,23 +799,27 @@
       const col = collection(db, 'gastos');
       await addDoc(col, { ...payload, createdAt: serverTimestamp() });
     }
-    async function confirmarGasto() {
+
+    /* 🔧 FIX: confirmarGasto expuesta al window */
+    window.confirmarGasto = async () => {
       const desc = document.getElementById('gastoDescripcion').value.trim();
       const gastoTotal = parseInt(document.getElementById('gastoTotal').value || '0', 10) || 0;
       let pagadoEfectivo = 0; DENOMS.forEach(d=> pagadoEfectivo += (gastoCounts[d]||0)*parseInt(d,10));
       if (!desc) return alert('Escribe la descripción del gasto.');
       if (gastoTotal <= 0) return alert('Escribe el total del gasto.');
 
-      // Descontar de base local
+      // Descontar de base local (con la combinación de billetes usada)
+      const baseHoy = getBaseCajaLocal() || { counts: {} };
+      const nuevos = {};
       DENOMS.forEach(d => {
-        const curr = baseCounts[d] || 0;
+        const curr = baseHoy.counts[d] || 0;
         const resta = gastoCounts[d] || 0;
-        baseCounts[d] = Math.max(0, curr - resta);
+        nuevos[d] = Math.max(0, curr - resta);
       });
-      setBaseCajaLocal(baseCounts);
+      setBaseCajaLocal(nuevos);
       try {
-        let monto = 0; DENOMS.forEach(d=> monto += (baseCounts[d]||0)*parseInt(d,10));
-        await guardarBaseEnFirestore(structuredClone(baseCounts), monto);
+        let monto = 0; DENOMS.forEach(d=> monto += (nuevos[d]||0)*parseInt(d,10));
+        await guardarBaseEnFirestore(structuredClone(nuevos), monto);
       } catch(e){
         console.warn('save base cloud err:', e);
       }
@@ -861,7 +845,7 @@
       alert('Gasto registrado.');
       cerrarModalGasto();
       updateBaseBadge();
-    }
+    };
 
     /********** PEDIDOS **********/
     window.agregarProducto = (nombre, precio) => {
@@ -888,10 +872,9 @@
       document.getElementById("total").textContent = `Total: ${fmtMoney(total)}`;
     }
     window.toggleEfectivoSection = () => {
-      // mantenemos solo modal para efectivo
       const forma = document.getElementById("formaPago").value;
       if (forma === 'Efectivo') {
-        // abrir modal de efectivo (ya se abre en onchange)
+        // Modal ya se abre en onchange
       }
     };
     function getEfectivoRecibidoFromState() {
@@ -918,13 +901,11 @@
       await addDoc(col, { ...venta, createdAt: serverTimestamp() });
     }
     async function persistirVenta(venta) {
-      // Cloud
       try {
         await guardarVentaEnFirestore(venta);
       } catch(e) {
         console.warn('save venta cloud err:', e);
       }
-      // Local listado (opcional mantener)
       const ventas = JSON.parse(localStorage.getItem("ventas")) || [];
       ventas.push(venta);
       localStorage.setItem("ventas", JSON.stringify(ventas));
@@ -980,7 +961,6 @@
     async function cargarVentasDesdeFirestore() {
       const businessId = getOrInitBusinessId();
       const qRef = collection(db, 'ventas');
-      // Opción correcta: where + orderBy (requiere índice compuesto businessId ASC + createdAt DESC)
       const qy = query(qRef, where('businessId', '==', businessId), orderBy('createdAt', 'desc'));
       const snap = await getDocs(qy);
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1017,7 +997,6 @@
             </td>
           </tr>`;
       });
-      // cache local mirror (opcional)
       localStorage.setItem("ventas", JSON.stringify(ventas));
     };
 
@@ -1050,7 +1029,7 @@
       });
     };
 
-    /********** EXPORTAR / CIERRE / IMPRESIÓN (idéntico a tu lógica) **********/
+    /********** EXPORTAR / CIERRE / IMPRESIÓN **********/
     window.exportarVentasExcelConEstilo = async () => {
       if(!isAdmin()){ alert("Solo el Administrador puede exportar a Excel."); return; }
       let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
@@ -1253,31 +1232,6 @@
           <p class="total">Total: ${fmtMoney(v.total||0)}</p>
           <div class="line"></div>
           <p class="thanks">¡Gracias por su compra!</p>
-          <script>window.print();<\/script>
-        </body></html>`;
-      const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
-    };
-    window.imprimirVentaCocina = (index) => {
-      const ventas = JSON.parse(localStorage.getItem("ventas")) || []; const v = ventas[index]; if (!v) return alert("Venta no encontrada.");
-      const resumen = {}; (v.pedido||[]).forEach(p => { resumen[p.nombre] = (resumen[p.nombre] || 0) + 1; });
-      const contenido = `
-        <html><head><title>Pedido Cocina</title><style>
-          body{font-family:monospace;font-size:15px;margin:0;padding:11px;}
-          h2{text-align:center;font-size:19px;margin-bottom:11px;}
-          .info{margin-bottom:10px;} .info p{margin:2px 0;}
-          ul{list-style:none;padding:0;margin:0;} li{padding:4px 0;border-bottom:2px dashed #000;font-size:19px;}
-        </style></head><body>
-          <h2>🧾 PEDIDO A COCINA</h2>
-          <div class="info">
-            <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? (index + 1)}</p>
-            <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? (index + 1)}</p>
-            <p><strong>Cliente:</strong> ${v.cliente || "Sin nombre"}</p>
-            <p><strong>Hora:</strong> ${v.fecha || "Sin hora"}</p>
-            <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
-            ${v.observaciones ? `<p><strong>Observaciones:</strong> ${v.observaciones}</p>` : ""}
-          </div>
-          <ul>${Object.entries(resumen).map(([producto, cantidad]) => `<li>${producto} x${cantidad}</li>`).join("")}</ul>
-          <p style="text-align:center;margin-top:10px;">👨‍🍳 Preparar con cuidado</p>
           <script>window.print();<\/script>
         </body></html>`;
       const w = window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
