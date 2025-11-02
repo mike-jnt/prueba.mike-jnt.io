@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>SEÑOR AREPA — v5.1 (Firestore)</title>
-  <!-- Tailwind (ok para pruebas; en producción usa build) -->
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Excel export -->
   <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
@@ -164,7 +164,8 @@
       <button id="btnExportarExcel" onclick="exportarVentasExcelConEstilo()" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded">📊 Exportar Ventas a Excel</button>
       <button id="btnBorrarVentas" onclick="borrarVentas()" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded">🗑️ Borrar Ventas</button>
       <button id="btnResumenProductos" onclick="generarResumenProductos()" class="bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded">📊 Ver Resumen Productos</button>
-      <button id="btnCierreCaja" onclick="cierreDeCaja()" class="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded">💰 Cierre de Caja</button>
+      <!-- IMPORTANTE: este botón ahora llama a accionCierreCaja() -->
+      <button id="btnCierreCaja" onclick="accionCierreCaja()" class="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded">💰 Cierre de Caja</button>
     </div>
 
     <!-- Visualización de Ventas Guardadas -->
@@ -328,6 +329,27 @@
     </div>
   </div>
 
+  <!-- MODAL: Arqueo (reporte de cajero) -->
+  <div id="modalArqueo" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-xl overflow-hidden">
+      <div class="bg-yellow-50 p-6 border-b border-gray-200">
+        <h2 class="text-2xl font-bold text-yellow-700 mb-2">🧮 Reportar efectivo en caja</h2>
+        <p class="text-sm text-gray-600">Ingresa el <b>monto total</b> de efectivo que cuentas en la caja.</p>
+      </div>
+      <div class="p-6 space-y-3">
+        <label class="block text-sm text-gray-700">Monto contado (COP)</label>
+        <input id="arqueoMonto" type="number" min="0" class="w-full border rounded px-3 py-2" placeholder="0" />
+        <label class="block text-sm text-gray-700">Nota (opcional)</label>
+        <input id="arqueoNota" class="w-full border rounded px-3 py-2" placeholder="Observaciones..." />
+        <p class="text-xs text-gray-500">Se guardará con fecha de hoy y tu usuario.</p>
+      </div>
+      <div class="p-4 bg-gray-50 flex justify-end gap-2">
+        <button onclick="cerrarModalArqueo()" class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 text-gray-800">Cancelar</button>
+        <button onclick="confirmarArqueo()" class="px-4 py-2 rounded bg-amber-600 hover:bg-amber-700 text-white">Guardar reporte</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: Login -->
   <div id="loginModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg p-6 w-96">
@@ -381,8 +403,8 @@
     let comandaEnEdicion = null;
     let ventaTemporal = null;
 
-    const efCounts = {};   // efectivo recibido
-    const baseCounts = {}; // base de caja
+    const efCounts = {};    // efectivo recibido
+    const baseCounts = {};  // base de caja
     const gastoCounts = {}; // gasto
 
     /********** LOGIN LOCAL SIN AUTH **********/
@@ -475,8 +497,13 @@
       toggleDisplay('btnExportarExcel', admin);
       toggleDisplay('btnBorrarVentas', admin);
       toggleDisplay('btnResumenProductos', admin);
-      toggleDisplay('btnCierreCaja', true);
       toggleDisplay('btnBaseCaja', true);
+
+      // Ajuste de texto del botón de cierre según rol
+      const btnCierre = document.getElementById('btnCierreCaja');
+      if (btnCierre) {
+        btnCierre.textContent = admin ? '💰 Cierre de Caja' : '🧮 Reportar efectivo (cierre)';
+      }
 
       const thAcc = document.getElementById('thAcciones');
       if (thAcc) thAcc.classList.remove('hidden');
@@ -549,7 +576,6 @@
         createdAt: serverTimestamp()
       };
       await setDoc(ref, data, { merge: true });
-      // espejo por usuario
       const uref = doc(collection(db, 'users', user?.username || 'anon', 'bases'), id);
       await setDoc(uref, data, { merge: true });
     }
@@ -794,7 +820,6 @@
       await addDoc(collection(db, 'users', user?.username || 'anon', 'gastos'), { ...payload, createdAt: serverTimestamp() });
       return res;
     }
-    // <-- CAMBIO CLAVE: expuesto en window
     window.confirmarGasto = async () => {
       const desc = document.getElementById('gastoDescripcion').value.trim();
       const gastoTotal = parseInt(document.getElementById('gastoTotal').value || '0', 10) || 0;
@@ -845,6 +870,69 @@
       mostrarVentas(); // refrescar tabla combinada
     };
 
+    /********** ARQUEO (reporte del cajero) **********/
+    window.abrirModalArqueo = () => {
+      const m = document.getElementById('modalArqueo');
+      if(!getSessionUser()){ showLoginModal(); return; }
+      (document.getElementById('arqueoMonto').value = '');
+      (document.getElementById('arqueoNota').value = '');
+      m.classList.remove('hidden'); m.classList.add('flex');
+    };
+    window.cerrarModalArqueo = () => {
+      const m = document.getElementById('modalArqueo');
+      m.classList.add('hidden'); m.classList.remove('flex');
+    };
+    async function guardarArqueoEnFirestore(payload){
+      // colección plana 'arqueos' y espejo en users/{username}/arqueos
+      const col = collection(db, 'arqueos');
+      const res = await addDoc(col, { ...payload, createdAt: serverTimestamp() });
+      await addDoc(collection(db, 'users', payload.usuario || 'anon', 'arqueos'), { ...payload, createdAt: serverTimestamp() });
+      return res;
+    }
+    async function cargarArqueosHoyDesdeFirestore() {
+      const businessId = getOrInitBusinessId();
+      const qRef = collection(db, 'arqueos');
+      const qy = query(qRef, where('businessId','==',businessId), where('fecha','==',todayStr()), orderBy('createdAt','desc'));
+      const snap = await getDocs(qy);
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    }
+    window.confirmarArqueo = async () => {
+      const monto = Number(document.getElementById('arqueoMonto').value || 0);
+      const nota  = (document.getElementById('arqueoNota').value || '').trim();
+      if (monto <= 0) { alert('Ingresa un monto válido.'); return; }
+      const user = getSessionUser();
+      const payload = {
+        businessId: getOrInitBusinessId(),
+        usuario: user?.username || 'N/A',
+        rol: user?.role || '',
+        fecha: todayStr(),
+        hora: new Date().toLocaleTimeString(),
+        montoReportado: monto,
+        nota
+      };
+      try {
+        await guardarArqueoEnFirestore(payload);
+      } catch(e) {
+        console.warn('save arqueo cloud err:', e);
+      }
+      // Local mirror
+      const arr = JSON.parse(localStorage.getItem('arqueos') || '[]');
+      arr.push({ ...payload, createdAt: Date.now() });
+      localStorage.setItem('arqueos', JSON.stringify(arr));
+
+      cerrarModalArqueo();
+      alert('Reporte de efectivo guardado.');
+    };
+
+    // Decide qué hacer al pulsar el botón de cierre
+    window.accionCierreCaja = () => {
+      if (isAdmin()) {
+        cierreDeCaja(); // genera recibo con comparación
+      } else {
+        abrirModalArqueo(); // cajero reporta efectivo
+      }
+    };
+
     /********** PEDIDOS **********/
     window.agregarProducto = (nombre, precio) => {
       pedido.push({ nombre, precio });
@@ -872,7 +960,7 @@
     window.toggleEfectivoSection = () => {
       const forma = document.getElementById("formaPago").value;
       if (forma === 'Efectivo') {
-        // el modal ya se abre en onchange
+        // abre el modal con onchange
       }
     };
     function getEfectivoRecibidoFromState() {
@@ -1169,7 +1257,7 @@
       }
 
       let totalGastos = 0;
-      gastos.forEach((g, idx) => {
+      gastos.forEach((g) => {
         const r = sheet.addRow([
           "",
           g.fecha || "",
@@ -1187,18 +1275,12 @@
           }
         });
       });
-      // Total gastos
       const tg = sheet.addRow(["","","","TOTAL GASTOS:", "", totalGastos]);
       tg.getCell(6).numFmt = '"$"#,##0';
       tg.getCell(4).font = { bold: true };
 
-      // Anchos
-      sheet.columns.forEach((col, i) => {
-        if (i === 0) return;
-        col.width = 18;
-      });
+      sheet.columns.forEach((col, i) => { if (i !== 0) col.width = 18; });
 
-      // Descargar
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url;
@@ -1206,7 +1288,9 @@
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     };
 
-    window.cierreDeCaja = () => {
+    // Cierre de caja (ADMIN): ahora incluye comparación con reportes de cajero
+    window.cierreDeCaja = async () => {
+      // calculo de netos según ventas locales
       const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
       const base = getBaseCajaLocal();
       const sumRec = {}, sumDev = {}, sumNet = {}, finalCounts = {};
@@ -1228,14 +1312,42 @@
         montoBase += baseCnt*parseInt(d,10);
         montoFinal+= finalCounts[d]*parseInt(d,10);
       });
+
+      // cargar reportes de cajero (Firestore con fallback local)
+      let arqueos = [];
+      try {
+        arqueos = await cargarArqueosHoyDesdeFirestore();
+      } catch(e) {
+        console.warn('Fallo lectura arqueos FS:', e);
+      }
+      if (!arqueos.length) {
+        const loc = JSON.parse(localStorage.getItem('arqueos') || '[]');
+        arqueos = loc.filter(a => a.fecha === todayStr());
+      }
+
+      const arqueosHTML = (arqueos || []).map(a=>{
+        const diff = (a.montoReportado||0) - montoFinal;
+        const color = diff === 0 ? '#065f46' : (diff > 0 ? '#1d4ed8' : '#b91c1c');
+        return `<tr>
+          <td>${a.usuario || ''}</td>
+          <td>${a.hora || ''}</td>
+          <td style="text-align:right;">${fmtMoney(a.montoReportado||0)}</td>
+          <td style="text-align:right;color:${color};font-weight:bold;">${fmtMoney(diff)}</td>
+          <td>${a.nota ? a.nota.replace(/</g,'&lt;') : ''}</td>
+        </tr>`;
+      }).join('') || `<tr><td colspan="5" style="text-align:center;color:#6b7280;">Sin reportes de cajero para hoy.</td></tr>`;
+
       const html = `
         <html><head><title>Cierre de Caja</title><style>
           body { font-family: monospace; font-size: 12px; width: 76mm; padding: 10px 12px; margin: 0; }
-          h2 { text-align: center; font-size: 18px; margin: 8px 0; font-weight: bold; }
+          h2, h3 { text-align: center; margin: 8px 0; font-weight: bold; }
+          h2 { font-size: 18px; }
+          h3 { font-size: 14px; }
           .line { border-top: 1px dashed #000; margin: 8px 0; }
           table { width:100%; border-collapse: collapse; }
           th,td{ padding:4px 2px; text-align:right; }
           th:first-child,td:first-child{text-align:left;}
+          th { border-bottom: 1px solid #000; }
           .totales p{ margin:3px 0; font-weight:bold; }
           .foot{ text-align:center; margin-top:10px; }
         </style></head><body>
@@ -1277,8 +1389,26 @@
             <p>Efectivo Recibido Ventas: ${fmtMoney(montoRec)}</p>
             <p>Efectivo Devuelto: ${fmtMoney(montoDev)}</p>
             <p>Neto por Ventas: ${fmtMoney(montoNet)}</p>
-            <p>Total Esperado en Caja (Base + Neto): ${fmtMoney(montoFinal)}</p>
+            <p><b>Total Esperado en Caja (Base + Neto): ${fmtMoney(montoFinal)}</b></p>
           </div>
+
+          <div class="line"></div>
+          <h3>Reportes de cajero (arqueo)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:left;">Usuario</th>
+                <th>Hora</th>
+                <th>Reportado</th>
+                <th>Diferencia</th>
+                <th style="text-align:left;">Nota</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${arqueosHTML}
+            </tbody>
+          </table>
+
           <div class="line"></div>
           <p class="foot">Gracias. — Señor Arepa</p>
           <script>window.print();<\/script>
@@ -1286,7 +1416,7 @@
       const w = window.open("", "_blank", "width=460,height=720"); w.document.write(html); w.document.close(); w.focus();
     };
 
-    // Impresión última venta (rápidas)
+    // Impresión rápida de ventas/gastos (sin cambios de lógica)
     window.imprimirUltimaCocinero = () => {
       const ventas = JSON.parse(localStorage.getItem("ventas") || "[]");
       if (ventas.length === 0) return alert("No hay ventas para imprimir.");
@@ -1519,6 +1649,7 @@
       if(confirm("¿Seguro que deseas borrar TODAS las ventas y gastos locales?")) {
         localStorage.removeItem("ventas");
         localStorage.removeItem("gastos");
+        localStorage.removeItem("arqueos");
         mostrarVentas();
         alert("Historial local borrado.");
       }
