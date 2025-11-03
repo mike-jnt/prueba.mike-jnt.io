@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SEÑOR AREPA — v5.3 (Firestore + Users Cloud)</title>
+  <title>SEÑOR AREPA — v5.4 (Fix multi-dispositivo + negocio único)</title>
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Excel export -->
@@ -366,7 +366,6 @@
       serverTimestamp,
       doc,
       setDoc,
-      deleteDoc,
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -381,6 +380,13 @@
     const app = initializeApp(firebaseConfig);
     const db  = initializeFirestore(app, { localCache: persistentLocalCache() });
 
+    /********** NEGOCIO FIJO (soluciona “no pertenece a este negocio”) **********/
+    // IMPORTANTE: usa SIEMPRE el MISMO BUSINESS_ID en TODOS los dispositivos.
+    // Si ya tienes uno en tus documentos de Firestore (campo businessId), colócalo aquí.
+    const BUSINESS_ID = "senor-arepa"; // <-- CAMBIA AQUÍ si tu negocio ya tiene otro ID en Firestore
+
+    function getBusinessId(){ return BUSINESS_ID; } // fuerza el mismo ID (no depende del hostname)
+
     /********** ESTADO **********/
     const DENOMS = ["100000","50000","20000","10000","5000","2000","1000","500","200","100","50","20"];
     let pedido = []; let total = 0; let comandaEnEdicion = null; let ventaTemporal = null;
@@ -389,22 +395,15 @@
     /********** UTIL **********/
     function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function fmtMoney(n){ try{return n.toLocaleString('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});}catch{return `$${(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')}`;} }
-    function getOrInitBusinessId(){ let id=localStorage.getItem('businessId'); if(!id){ id=location.hostname||'senor-arepa'; localStorage.setItem('businessId',id);} return id; }
     function setSessionUser(u){ localStorage.setItem('sessionUser', JSON.stringify(u)); }
     function getSessionUser(){ return JSON.parse(localStorage.getItem('sessionUser')||'null'); }
     function isAdmin(){ return getSessionUser()?.role==='admin'; }
     function toggleDisplay(id, show){ const el=document.getElementById(id); if(!el) return; el.classList[show?'remove':'add']('hidden'); }
-
-    // SHA-256
-    async function hashPassword(pwd){
-      const enc = new TextEncoder().encode(pwd);
-      const buf = await crypto.subtle.digest('SHA-256', enc);
-      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    }
+    async function hashPassword(pwd){ const enc=new TextEncoder().encode(pwd); const buf=await crypto.subtle.digest('SHA-256', enc); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join(''); }
 
     /********** USERS EN FIRESTORE **********/
     async function ensureDefaultUsersInFirestore(){
-      const businessId=getOrInitBusinessId();
+      const businessId=getBusinessId();
       const qs = await getDocs(query(collection(db,'users'), where('businessId','==',businessId)));
       if(!qs.empty) return;
       const adminHash = await hashPassword('admin123');
@@ -422,14 +421,14 @@
     }
     async function upsertUserProfile(username, role, passwordHash){
       const ref=doc(collection(db,'users'), username);
-      const payload={ username, role, businessId:getOrInitBusinessId(), updatedAt:serverTimestamp() };
+      const payload={ username, role, businessId:getBusinessId(), updatedAt:serverTimestamp() };
       if(passwordHash) payload.passwordHash=passwordHash;
       const exists=await getDoc(ref);
       if(!exists.exists()) payload.createdAt=serverTimestamp();
       await setDoc(ref, payload, { merge:true });
     }
     async function loadUsersFromFirestore(){
-      const qs = await getDocs(query(collection(db,'users'), where('businessId','==',getOrInitBusinessId())));
+      const qs = await getDocs(query(collection(db,'users'), where('businessId','==',getBusinessId())));
       return qs.docs.map(d=>({ id:d.id, ...d.data() }));
     }
     async function renderUsersTable(){
@@ -446,7 +445,7 @@
               <button onclick="deleteUser('${u.username.replace(/'/g,"\\'")}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">Eliminar</button>
             </td>
           </tr>`).join('');
-        // llenar filtro de usuario (admin)
+        // llenar filtro usuario (admin)
         const sel=document.getElementById('filtroUsuario');
         if(sel){ const val=sel.value; sel.innerHTML = `<option value="__todos__">Todos</option>` + list.map(u=>`<option value="${u.username}">${u.username}</option>`).join(''); sel.value=val||'__todos__'; }
       }catch(e){
@@ -454,11 +453,11 @@
       }
     }
     async function countAdmins(){
-      const qs=await getDocs(query(collection(db,'users'), where('businessId','==',getOrInitBusinessId()), where('role','==','admin')));
+      const qs=await getDocs(query(collection(db,'users'), where('businessId','==',getBusinessId()), where('role','==','admin')));
       return qs.size;
     }
 
-    /********** LOGIN **********/
+    /********** LOGIN (adopta negocio del usuario si no coincide) **********/
     window.loginFromModal = async (e)=>{
       e.preventDefault();
       const username = document.getElementById('loginUser').value.trim();
@@ -468,9 +467,18 @@
         await ensureDefaultUsersInFirestore();
         const userDoc = await getUserDoc(username);
         if(!userDoc){ alert('Usuario no existe.'); return false; }
-        if(userDoc.businessId !== getOrInitBusinessId()){ alert('Usuario no pertenece a este negocio.'); return false; }
+
+        // Validación de contraseña
         const h = await hashPassword(password);
-        if(userDoc.passwordHash !== h){ alert('Contraseña incorrecta.'); return false; }
+        if((userDoc.passwordHash||'') !== h){ alert('Contraseña incorrecta.'); return false; }
+
+        // NEGOCIO: si el user tiene otro businessId distinto, lo permitimos solo si coincide con el BUSINESS_ID configurado.
+        if(userDoc.businessId && userDoc.businessId !== getBusinessId()){
+          alert(`Este usuario pertenece al negocio "${userDoc.businessId}", pero esta app está configurada para "${getBusinessId()}".\n\nCorrige la constante BUSINESS_ID en el código o crea usuarios para este negocio.`);
+          return false;
+        }
+
+        // Sesión
         setSessionUser({ username:userDoc.username, role:userDoc.role });
         hideLoginModal();
         applyRoleUI();
@@ -533,13 +541,13 @@
     function autoPromptBaseIfMissing(){ if(!getBaseCajaLocal()){ abrirModalBaseCaja(true); } }
 
     async function guardarBaseEnFirestore(counts, monto){
-      const businessId=getOrInitBusinessId(); const id=todayStr(); const u=getSessionUser();
+      const id=todayStr(); const u=getSessionUser();
       await setDoc(doc(collection(db,'bases'), id), {
-        businessId, fecha:todayStr(), counts, monto, usuario:u?.username||'N/A', updatedAt:serverTimestamp(), createdAt:serverTimestamp()
+        businessId:getBusinessId(), fecha:todayStr(), counts, monto, usuario:u?.username||'N/A', updatedAt:serverTimestamp(), createdAt:serverTimestamp()
       }, { merge:true });
       // espejo por usuario
       await setDoc(doc(collection(db,'users', u?.username||'anon','bases'), id), {
-        businessId, fecha:todayStr(), counts, monto, usuario:u?.username||'N/A', updatedAt:serverTimestamp(), createdAt:serverTimestamp()
+        businessId:getBusinessId(), fecha:todayStr(), counts, monto, usuario:u?.username||'N/A', updatedAt:serverTimestamp(), createdAt:serverTimestamp()
       }, { merge:true });
     }
 
@@ -653,7 +661,7 @@
       setBaseCajaLocal(nuevos);
       try{ let monto=0; DENOMS.forEach(d=> monto+=(nuevos[d]||0)*parseInt(d,10)); await guardarBaseEnFirestore(structuredClone(nuevos), monto);}catch(e){console.warn('save base cloud err:',e);}
 
-      const payload={ businessId:getOrInitBusinessId(), descripcion:desc, total:gastoTotal, pagadoEfectivo, billetesUsados:structuredClone(gastoCounts), fecha:new Date().toLocaleString(), usuario:getSessionUser()?.username||'N/A', tipo:'gasto' };
+      const payload={ businessId:getBusinessId(), descripcion:desc, total:gastoTotal, pagadoEfectivo, billetesUsados:structuredClone(gastoCounts), fecha:new Date().toLocaleString(), usuario:getSessionUser()?.username||'N/A', tipo:'gasto' };
       try{ await guardarGastoEnFirestore(payload);}catch(e){ console.warn('save gasto cloud err:',e); }
       alert('Gasto registrado.'); cerrarModalGasto(); updateBaseBadge(); mostrarVentas();
     };
@@ -703,7 +711,7 @@
       let vuelto=0;
       if(formaPago==='Efectivo'){ if(totalRecibido<total) return alert(`Efectivo insuficiente. Faltan ${fmtMoney(total-totalRecibido)}.`); vuelto=totalRecibido-total; }
       else{ DENOMS.forEach(d=> billetesRecibidos[d]=0); }
-      const baseVenta={ businessId:getOrInitBusinessId(), cliente, formaPago, tipoPedido, observaciones, pedido:[...pedido], total, fecha:new Date().toLocaleString(), billetesRecibidos, billetesDevueltos:{}, efectivoRecibido:totalRecibido, usuario:getSessionUser()?.username||'N/A', tipo:'venta' };
+      const baseVenta={ businessId:getBusinessId(), cliente, formaPago, tipoPedido, observaciones, pedido:[...pedido], total, fecha:new Date().toLocaleString(), billetesRecibidos, billetesDevueltos:{}, efectivoRecibido:totalRecibido, usuario:getSessionUser()?.username||'N/A', tipo:'venta' };
       if(formaPago==='Efectivo' && vuelto>0){ ventaTemporal={ ...baseVenta, vuelto, comanda:null }; abrirModalVuelto(vuelto); return; }
       const venta={ ...baseVenta, comanda: comandaEnEdicion ?? obtenerSiguienteComanda() };
       await persistirVenta(venta); comandaEnEdicion=null; alert('Venta guardada exitosamente.'); limpiarPedido(); mostrarVentas(); const rp=document.getElementById('resumenProductos'); if(rp) rp.classList.add('hidden');
@@ -713,12 +721,12 @@
     function tsKey(d){ if(!d) return 0; if(typeof d==='number') return d; if(d.seconds!==undefined) return d.seconds*1000+Math.floor((d.nanoseconds||0)/1e6); return 0; }
 
     async function cargarVentasDesdeFirestore(){
-      const qy=query(collection(db,'ventas'), where('businessId','==',getOrInitBusinessId()), orderBy('createdAt','desc'));
+      const qy=query(collection(db,'ventas'), where('businessId','==',getBusinessId()), orderBy('createdAt','desc'));
       const snap=await getDocs(qy);
       return snap.docs.map(d=>({ id:d.id, ...d.data() }));
     }
     async function cargarGastosDesdeFirestore(){
-      const qy=query(collection(db,'gastos'), where('businessId','==',getOrInitBusinessId()), orderBy('createdAt','desc'));
+      const qy=query(collection(db,'gastos'), where('businessId','==',getBusinessId()), orderBy('createdAt','desc'));
       const snap=await getDocs(qy);
       return snap.docs.map(d=>({ id:d.id, ...d.data() }));
     }
@@ -739,7 +747,7 @@
         items=[...ventas, ...gastos];
       }catch(e){
         console.warn('Fallo lectura Firestore, uso LocalStorage:', e);
-        items = JSON.parse(localStorage.getItem('ventas')||'[]'); // aquí sólo ventas locales
+        items = JSON.parse(localStorage.getItem('ventas')||'[]'); // fallback solo ventas
       }
 
       // Filtro por admin (usuario seleccionado)
@@ -757,7 +765,7 @@
       // Orden (createdAt desc si está)
       items.sort((a,b)=> tsKey(b.createdAt)-tsKey(a.createdAt));
 
-      // cache espejo local (para impresión rápida)
+      // cache espejo local (para impresión/cierre)
       localStorage.setItem('ventasTabla', JSON.stringify(items));
 
       items.forEach((v,i)=>{
@@ -795,7 +803,7 @@
           </tr>`;
       });
 
-      // además, guarda sólo ventas (para impresiones por índice) si el array viene mixto
+      // además, guarda sólo ventas para impresiones por índice
       const ventasSolo = items.filter(x=> x.tipo!=='gasto');
       localStorage.setItem('ventas', JSON.stringify(ventasSolo));
     };
@@ -806,7 +814,10 @@
     window.exportarVentasExcelConEstilo = async ()=>{
       if(!isAdmin()){ alert("Solo el Administrador puede exportar a Excel."); return; }
       let ventas=[]; let gastos=[];
-      try{ [ventas,gastos] = await Promise.all([cargarVentasDesdeFirestore(), cargarGastosDesdeFirestore()]); }catch{}
+      try{ [ventas,gastos] = await Promise.all([
+        cargarVentasDesdeFirestore(),
+        cargarGastosDesdeFirestore()
+      ]);}catch{}
       ventas = aplicaFiltroUsuarioListado(ventas);
       gastos = aplicaFiltroUsuarioListado(gastos);
       if( !ventas.length && !gastos.length ){ return alert("No hay datos para exportar."); }
@@ -849,11 +860,10 @@
 
     /********** CIERRE **********/
     window.cierreDeCaja = ()=>{
-      const items=JSON.parse(localStorage.getItem('ventasTabla')||'[]'); // usamos combinados
+      const items=JSON.parse(localStorage.getItem('ventasTabla')||'[]'); // combinados
       const base=getBaseCajaLocal(); const sumRec={}, sumDev={}, sumNet={}, finalCounts={};
       let montoRec=0,montoDev=0,montoNet=0,montoBase=0,montoFinal=0;
       DENOMS.forEach(d=>{sumRec[d]=0;sumDev[d]=0;sumNet[d]=0;finalCounts[d]=0;});
-      // sólo ventas afectan efectivo recibido/devuelto
       items.filter(v=>v.tipo==='venta').forEach(v=>{ DENOMS.forEach(d=>{ sumRec[d]+=(v.billetesRecibidos?.[d]||0); sumDev[d]+=(v.billetesDevueltos?.[d]||0); }); });
       DENOMS.forEach(d=>{
         sumNet[d]=sumRec[d]-sumDev[d];
@@ -1001,7 +1011,7 @@
       if(!username||!password){ alert('Usuario y contraseña requeridos.'); return false; }
       try{
         const exists=await getUserDoc(username);
-        if(exists){ alert('Ese usuario ya existe.'); return false; }
+        if(exists && exists.businessId===getBusinessId()){ alert('Ese usuario ya existe en este negocio.'); return false; }
         const h=await hashPassword(password);
         await upsertUserProfile(username, role, h);
         alert('Usuario agregado en la nube.');
@@ -1024,7 +1034,7 @@
           const admins = await countAdmins();
           if(admins<=1){ alert('Debe existir al menos un administrador.'); return; }
         }
-        // En este flujo, NO borramos del historial global para no romper referencias; podrías agregar un flag "disabled".
+        // Deshabilitar para preservar historial
         await setDoc(doc(collection(db,'users'), username), { disabled:true, updatedAt:serverTimestamp() }, { merge:true });
         alert('Usuario deshabilitado. (Se conserva para historial)');
         await renderUsersTable();
@@ -1056,4 +1066,3 @@
   </script>
 </body>
 </html>
-
