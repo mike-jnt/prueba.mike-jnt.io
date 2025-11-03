@@ -3,19 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SEÑOR AREPA — v5.1 (Firestore)</title>
+  <title>SEÑOR AREPA — v5.3 (Firestore + Users Cloud)</title>
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Excel export -->
   <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 </head>
 
 <body class="bg-yellow-50 font-sans">
-
   <!-- NAV -->
   <nav class="bg-yellow-400 p-4 flex justify-between items-center text-white font-bold text-lg">
     <div class="flex items-center space-x-2">
-      <img src="imagenes/senora.png" alt="Logo Señor Arepa" class="w-20 h-20 rounded-full object-cover"
-           onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22><rect width=%2280%22 height=%2280%22 fill=%22%23fde68a%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 font-family=%22Arial%22 font-size=%2210%22 fill=%22%236b7280%22>Logo</text></svg>';"/>
+      <img src="imagenes/senora.png"
+           alt="Logo Señor Arepa"
+           class="w-20 h-20 rounded-full object-cover"
+           onerror="this.onerror=null;this.src='imagenes/logo-fallback.png';">
       <span class="text-xl">SEÑOR AREPA</span>
     </div>
     <div class="flex items-center gap-3">
@@ -30,6 +33,8 @@
   <!-- MAIN -->
   <main class="p-6">
     <h2 class="text-2xl font-bold text-gray-700 mb-4">Menú</h2>
+
+    <!-- Productos -->
     <div id="productos" class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <!-- Comida -->
       <div class="bg-white p-4 rounded-xl shadow-md">
@@ -65,7 +70,7 @@
           <button onclick="agregarProducto('ADICION RANCHERA', 7000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🔥 RANCHERA - $7.000</button>
           <button onclick="agregarProducto('ADICION CHORIZO', 7000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🌭 CHORIZO - $7.000</button>
           <button onclick="agregarProducto('ADICION TOCINETA', 7000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥓 TOCINETA - $7.000</button>
-          <button onclick="agregarProducto('ADICION MADURO', 3000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🍌 MADURO - $3.000</button>
+          <button onclick="agregarProducto('ADICION MADURO', 3000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🍌  MADURO - $3.000</button>
           <button onclick="agregarProducto('ADICION ARMA TU AREPA X5', 25000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🍌 ARMA TU AREPA - $25.000</button>
         </div>
       </div>
@@ -93,7 +98,7 @@
           <button onclick="agregarProducto('PREMIO 400 ml', 4000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 PREMIO 400 ml - $4.000</button>
           <button onclick="agregarProducto('PREMIO 1.5l', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 PREMIO 1.5l - $9.000</button>
           <button onclick="agregarProducto('QUATRO 1.5L', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 QUATRO 1.5L - $9.000</button>
-          <button onclick="agregarProducto('COCA COLA 1.5L', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 COCA COLA 1.5L - $9.000</button>
+          <button onclick="agregarProducto('COCA COLA 1.5L', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 COCA COLA  1.5L - $9.000</button>
           <button onclick="agregarProducto('JUGO HIT 1.L', 7500)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 JUGO HIT 1.L - $7.500</button>
           <button onclick="agregarProducto('SPRITE 1.5L', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 SPRITE 1.5L - $9.000</button>
           <button onclick="agregarProducto('COCA COLA ZERO 1.5L', 9000)" class="bg-yellow-300 hover:bg-yellow-400 p-2 rounded">🥤 COCA COLA ZERO 1.5L - $9.000</button>
@@ -115,8 +120,8 @@
 
     <!-- Cliente & Pago -->
     <div class="mt-4 flex flex-col md:flex-row gap-4">
-      <input id="cliente" placeholder="Nombre del Cliente" class="flex-1 p-2 border border-yellow-300 rounded"/>
-      <input id="observaciones" placeholder="Observaciones (Ej: Sin cebolla, agregar salsas...)" class="flex-1 p-2 border border-yellow-300 rounded"/>
+      <input type="text" id="cliente" placeholder="Nombre del Cliente" class="flex-1 p-2 border border-yellow-300 rounded" />
+      <input type="text" id="observaciones" placeholder="Observaciones (Ej: Sin cebolla, agregar salsas, etc.)" class="flex-1 p-2 border border-yellow-300 rounded" />
       <select id="formaPago" class="flex-1 p-2 border border-yellow-300 rounded" onchange="toggleEfectivoSection(); if(this.value==='Efectivo'){abrirModalEfectivoRecibido();}">
         <option value="">Seleccione forma de pago</option>
         <option value="Efectivo">Efectivo</option>
@@ -129,7 +134,7 @@
 
     <!-- Tipo de pedido -->
     <div class="mt-4">
-      <label class="block text-sm font-medium text-gray-700">Tipo de Pedido</label>
+      <label for="tipoPedido" class="block text-sm font-medium text-gray-700">Tipo de Pedido</label>
       <select id="tipoPedido" class="mt-1 p-2 border rounded w-full">
         <option value="">Selecciona</option>
         <option value="Aquí">Aquí</option>
@@ -159,25 +164,36 @@
 
     <!-- Tabla movimientos -->
     <div id="ventasSeccion" class="mt-8 bg-white p-4 rounded-xl shadow-md">
-      <h3 class="text-lg font-semibold mb-2">Ventas Guardadas</h3>
-      <div class="mb-4">
-        <input id="filtroCliente" oninput="filtrarVentasPorCliente()" placeholder="🔍 Filtrar por cliente o descripción..." class="w-full md:w-1/3 p-2 border border-yellow-300 rounded"/>
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+        <h3 class="text-lg font-semibold">Movimientos (Ventas y Gastos)</h3>
+        <div class="flex flex-col md:flex-row gap-2 md:items-center">
+          <input type="text" id="filtroCliente" oninput="filtrarVentasPorCliente()" placeholder="🔍 Filtrar por cliente/desc..." class="w-full md:w-64 p-2 border border-yellow-300 rounded" />
+          <div id="filtroUsuarioWrap" class="hidden md:flex items-center gap-2">
+            <label class="text-sm text-gray-700">Usuario:</label>
+            <select id="filtroUsuario" class="p-2 border rounded" onchange="mostrarVentas()">
+              <option value="__todos__">Todos</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <table class="min-w-full text-left border">
-        <thead>
-          <tr class="bg-yellow-200">
-            <th class="p-2 border">#</th>
-            <th class="p-2 border">Fecha</th>
-            <th class="p-2 border">Cliente</th>
-            <th class="p-2 border">Forma de Pago</th>
-            <th class="p-2 border">Tipo</th>
-            <th class="p-2 border">Productos / Descripción</th>
-            <th class="p-2 border">Total</th>
-            <th id="thAcciones" class="p-2 border">Acciones</th>
-          </tr>
-        </thead>
-        <tbody id="ventasGuardadas" class="text-sm text-gray-800"></tbody>
-      </table>
+      <div class="mt-3">
+        <table class="min-w-full text-left border">
+          <thead>
+            <tr class="bg-yellow-200">
+              <th class="p-2 border">#</th>
+              <th class="p-2 border">Fecha</th>
+              <th class="p-2 border">Usuario</th>
+              <th class="p-2 border">Cliente</th>
+              <th class="p-2 border">Forma de Pago</th>
+              <th class="p-2 border">Tipo de Pedido</th>
+              <th class="p-2 border">Productos / Descripción</th>
+              <th class="p-2 border">Total</th>
+              <th id="thAcciones" class="p-2 border">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="ventasGuardadas" class="text-sm text-gray-800"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Resumen Productos (solo admin) -->
@@ -188,18 +204,16 @@
 
     <!-- Gestión de Usuarios (solo admin) -->
     <div id="adminUsuariosSection" class="hidden mt-8 bg-white p-4 rounded-xl shadow-md">
-      <h3 class="text-lg font-semibold mb-3">Gestión de Usuarios</h3>
-
-      <form onsubmit="return addUserFromForm(event)" class="grid grid-cols-1 md:grid-cols-5 gap-2 mb-4">
+      <h3 class="text-lg font-semibold mb-2">Gestión de Usuarios (nube)</h3>
+      <form onsubmit="return addUserFromForm(event)" class="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
         <input id="newUsername" class="p-2 border rounded" placeholder="Usuario" required>
         <input id="newPassword" type="password" class="p-2 border rounded" placeholder="Contraseña" required>
         <select id="newRole" class="p-2 border rounded">
           <option value="cajero">Cajero</option>
           <option value="admin">Admin</option>
         </select>
-        <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded col-span-2">➕ Agregar (sincroniza en nube)</button>
+        <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded">➕ Agregar</button>
       </form>
-
       <table class="min-w-full text-left border">
         <thead>
           <tr class="bg-yellow-200">
@@ -214,10 +228,8 @@
     </div>
   </main>
 
-  <!-- MODALES: Vuelto / Base / Efectivo / Gasto / Login (igual que antes) -->
-  <!-- ... (MISMO HTML DE MODALES QUE YA TENÍAMOS, SIN CAMBIOS ESTRUCTURALES) ... -->
-  <!-- Para ahorrar espacio en esta respuesta, los modales son idénticos a la versión anterior que ya usas -->
-  <!-- >>> INICIO BLOQUE MODALES (copiados tal cual de tu última versión) >>> -->
+  <!-- MODALES: Vuelto / Base / Efectivo / Gasto / Login -->
+  <!-- Vuelto -->
   <div id="modalVuelto" class="fixed inset-0 bg-black/50 hidden z-50 items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
       <div class="w-full md:w-1/3 bg-yellow-50 p-6 border-r border-gray-200">
@@ -242,6 +254,7 @@
     </div>
   </div>
 
+  <!-- Base de Caja -->
   <div id="modalBaseCaja" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
       <div class="w-full md:w-1/3 bg-yellow-50 p-6 flex flex-col justify-between border-r border-gray-200">
@@ -268,6 +281,7 @@
     </div>
   </div>
 
+  <!-- Efectivo Recibido -->
   <div id="modalEfectivo" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
       <div class="w-full md:w-1/3 bg-yellow-50 p-6 flex flex-col justify-between border-r border-gray-200">
@@ -291,6 +305,7 @@
     </div>
   </div>
 
+  <!-- Compras / Pagos -->
   <div id="modalGasto" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
       <div class="w-full md:w-1/3 bg-rose-50 p-6 flex flex-col justify-between border-r border-gray-200">
@@ -321,6 +336,7 @@
     </div>
   </div>
 
+  <!-- Login -->
   <div id="loginModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg p-6 w-96">
       <h2 class="text-xl font-bold mb-4">Iniciar sesión</h2>
@@ -329,23 +345,30 @@
         <input id="loginPass" type="password" class="p-2 border rounded w-full" placeholder="Contraseña" required>
         <button class="w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded">Entrar</button>
       </form>
-      <p class="text-xs text-gray-500 mt-3">
-        Usuarios iniciales (si no hay ninguno en la nube): <b>admin/admin123</b> — <b>cajero/caja123</b>
-      </p>
+      <p class="text-xs text-gray-500 mt-3">Usuarios iniciales (si no hay en la nube): <b>admin/admin123</b> — <b>cajero/caja123</b></p>
     </div>
   </div>
-  <!-- <<< FIN BLOQUE MODALES >>> -->
 
   <!-- APP + FIREBASE -->
   <script type="module">
+    /********** FIREBASE **********/
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import {
       initializeFirestore,
       persistentLocalCache,
-      collection, addDoc, getDocs, getDoc, setDoc, doc, orderBy, query, where, serverTimestamp, deleteDoc
+      collection,
+      addDoc,
+      getDocs,
+      getDoc,
+      query,
+      where,
+      orderBy,
+      serverTimestamp,
+      doc,
+      setDoc,
+      deleteDoc,
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    // CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyDwCV5NmixGyEZ_bdAMTU5wqDua_BbANSo",
       authDomain: "senorarepa-689cc.firebaseapp.com",
@@ -354,41 +377,36 @@
       messagingSenderId: "499118544254",
       appId: "1:499118544254:web:cdf7b22c12bb760d184f2f"
     };
+
     const app = initializeApp(firebaseConfig);
     const db  = initializeFirestore(app, { localCache: persistentLocalCache() });
 
-    // ESTADO
+    /********** ESTADO **********/
     const DENOMS = ["100000","50000","20000","10000","5000","2000","1000","500","200","100","50","20"];
     let pedido = []; let total = 0; let comandaEnEdicion = null; let ventaTemporal = null;
     const efCounts = {}; const baseCounts = {}; const gastoCounts = {};
 
-    // UTIL
-    function todayStr(){ const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+    /********** UTIL **********/
+    function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function fmtMoney(n){ try{return n.toLocaleString('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0});}catch{return `$${(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.')}`;} }
     function getOrInitBusinessId(){ let id=localStorage.getItem('businessId'); if(!id){ id=location.hostname||'senor-arepa'; localStorage.setItem('businessId',id);} return id; }
-    function getSessionUser(){ return JSON.parse(localStorage.getItem('sessionUser')||'null'); }
     function setSessionUser(u){ localStorage.setItem('sessionUser', JSON.stringify(u)); }
+    function getSessionUser(){ return JSON.parse(localStorage.getItem('sessionUser')||'null'); }
     function isAdmin(){ return getSessionUser()?.role==='admin'; }
     function toggleDisplay(id, show){ const el=document.getElementById(id); if(!el) return; el.classList[show?'remove':'add']('hidden'); }
-    function updateBaseBadge(){
-      const base=getBaseCajaLocal(); const el=document.getElementById('baseBadge');
-      if(!el) return; el.textContent = base? `Base hoy: ${fmtMoney(base.monto)} (${base.usuario})` : `Base no registrada`; el.classList.remove('hidden');
-    }
 
-    // HASH simple (SHA-256)
+    // SHA-256
     async function hashPassword(pwd){
       const enc = new TextEncoder().encode(pwd);
       const buf = await crypto.subtle.digest('SHA-256', enc);
       return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
     }
 
-    // USERS — Firestore
+    /********** USERS EN FIRESTORE **********/
     async function ensureDefaultUsersInFirestore(){
       const businessId=getOrInitBusinessId();
-      // ¿Ya hay alguno?
       const qs = await getDocs(query(collection(db,'users'), where('businessId','==',businessId)));
-      if (!qs.empty) return;
-      // Crea admin y cajero por defecto con hash
+      if(!qs.empty) return;
       const adminHash = await hashPassword('admin123');
       const cajeroHash= await hashPassword('caja123');
       await setDoc(doc(collection(db,'users'),'admin'), {
@@ -398,25 +416,28 @@
         username:'cajero', role:'cajero', businessId, passwordHash:cajeroHash, createdAt:serverTimestamp(), updatedAt:serverTimestamp()
       });
     }
-
     async function getUserDoc(username){
-      const ref = doc(collection(db,'users'), username);
-      const snap = await getDoc(ref);
+      const snap=await getDoc(doc(collection(db,'users'), username));
       return snap.exists()? snap.data() : null;
     }
-
+    async function upsertUserProfile(username, role, passwordHash){
+      const ref=doc(collection(db,'users'), username);
+      const payload={ username, role, businessId:getOrInitBusinessId(), updatedAt:serverTimestamp() };
+      if(passwordHash) payload.passwordHash=passwordHash;
+      const exists=await getDoc(ref);
+      if(!exists.exists()) payload.createdAt=serverTimestamp();
+      await setDoc(ref, payload, { merge:true });
+    }
     async function loadUsersFromFirestore(){
-      const businessId=getOrInitBusinessId();
-      const qs = await getDocs(query(collection(db,'users'), where('businessId','==',businessId)));
+      const qs = await getDocs(query(collection(db,'users'), where('businessId','==',getOrInitBusinessId())));
       return qs.docs.map(d=>({ id:d.id, ...d.data() }));
     }
-
     async function renderUsersTable(){
       const tbody=document.getElementById('usuariosTbody'); if(!tbody) return;
-      try {
-        const list = await loadUsersFromFirestore();
+      try{
+        const list=await loadUsersFromFirestore();
         list.sort((a,b)=> (a.username||'').localeCompare(b.username||''));
-        tbody.innerHTML = list.map(u=>`
+        tbody.innerHTML=list.map(u=>`
           <tr>
             <td class="p-2 border">${u.username}</td>
             <td class="p-2 border">${u.role}</td>
@@ -425,18 +446,47 @@
               <button onclick="deleteUser('${u.username.replace(/'/g,"\\'")}')" class="bg-red-600 text-white px-2 py-1 rounded text-xs">Eliminar</button>
             </td>
           </tr>`).join('');
-      } catch(e){
-        tbody.innerHTML = `<tr><td colspan="4" class="p-2 border text-red-600">No se pudo cargar usuarios.</td></tr>`;
+        // llenar filtro de usuario (admin)
+        const sel=document.getElementById('filtroUsuario');
+        if(sel){ const val=sel.value; sel.innerHTML = `<option value="__todos__">Todos</option>` + list.map(u=>`<option value="${u.username}">${u.username}</option>`).join(''); sel.value=val||'__todos__'; }
+      }catch(e){
+        tbody.innerHTML=`<tr><td colspan="4" class="p-2 border text-red-600">No se pudo cargar usuarios.</td></tr>`;
       }
     }
-
     async function countAdmins(){
-      const businessId=getOrInitBusinessId();
-      const qs = await getDocs(query(collection(db,'users'), where('businessId','==',businessId), where('role','==','admin')));
+      const qs=await getDocs(query(collection(db,'users'), where('businessId','==',getOrInitBusinessId()), where('role','==','admin')));
       return qs.size;
     }
 
-    // UI roles
+    /********** LOGIN **********/
+    window.loginFromModal = async (e)=>{
+      e.preventDefault();
+      const username = document.getElementById('loginUser').value.trim();
+      const password = document.getElementById('loginPass').value;
+      if(!username||!password){ alert('Ingresa usuario y contraseña'); return false; }
+      try{
+        await ensureDefaultUsersInFirestore();
+        const userDoc = await getUserDoc(username);
+        if(!userDoc){ alert('Usuario no existe.'); return false; }
+        if(userDoc.businessId !== getOrInitBusinessId()){ alert('Usuario no pertenece a este negocio.'); return false; }
+        const h = await hashPassword(password);
+        if(userDoc.passwordHash !== h){ alert('Contraseña incorrecta.'); return false; }
+        setSessionUser({ username:userDoc.username, role:userDoc.role });
+        hideLoginModal();
+        applyRoleUI();
+        await renderUsersTable();
+        await mostrarVentas();
+        autoPromptBaseIfMissing();
+      }catch(err){
+        console.warn(err); alert('No fue posible iniciar sesión.');
+      }
+      return false;
+    };
+    function showLoginModal(){ const m=document.getElementById('loginModal'); m.classList.remove('hidden'); m.classList.add('flex'); }
+    function hideLoginModal(){ const m=document.getElementById('loginModal'); m.classList.add('hidden'); m.classList.remove('flex'); }
+    window.logout = ()=>{ localStorage.removeItem('sessionUser'); applyRoleUI(); showLoginModal(); };
+
+    // UI por rol
     function applyRoleUI(){
       const badge=document.getElementById('currentUserBadge');
       const btnLogout=document.getElementById('btnLogout');
@@ -455,6 +505,9 @@
       toggleDisplay('btnCierreCaja', true);
       toggleDisplay('btnBaseCaja', true);
 
+      const wrap = document.getElementById('filtroUsuarioWrap');
+      if(wrap) wrap.classList.toggle('hidden', !admin);
+
       const thAcc = document.getElementById('thAcciones');
       if (thAcc) thAcc.classList.remove('hidden');
 
@@ -462,90 +515,7 @@
       updateBaseBadge();
     }
 
-    // Login (contra Firestore)
-    window.loginFromModal = async (e)=>{
-      e.preventDefault();
-      const username = document.getElementById('loginUser').value.trim();
-      const password = document.getElementById('loginPass').value;
-      if(!username||!password){ alert('Ingresa usuario y contraseña'); return false; }
-      try{
-        await ensureDefaultUsersInFirestore();
-        const userDoc = await getUserDoc(username);
-        if(!userDoc){ alert('Usuario no existe.'); return false; }
-        if(userDoc.businessId !== getOrInitBusinessId()){ alert('Usuario no pertenece a este negocio.'); return false; }
-        const h = await hashPassword(password);
-        if(userDoc.passwordHash !== h){ alert('Contraseña incorrecta.'); return false; }
-        setSessionUser({ username:userDoc.username, role:userDoc.role });
-        hideLoginModal();
-        applyRoleUI();
-        await mostrarVentas(); // carga datos según rol
-        autoPromptBaseIfMissing();
-      }catch(err){
-        console.warn(err);
-        alert('No fue posible iniciar sesión.');
-      }
-      return false;
-    };
-    function showLoginModal(){ const m=document.getElementById('loginModal'); m.classList.remove('hidden'); m.classList.add('flex'); }
-    function hideLoginModal(){ const m=document.getElementById('loginModal'); m.classList.add('hidden'); m.classList.remove('flex'); }
-    window.logout = ()=>{
-      localStorage.removeItem('sessionUser'); applyRoleUI(); showLoginModal();
-    };
-
-    // Crear/actualizar user
-    async function upsertUserProfile(username, role, passwordHash){
-      const businessId=getOrInitBusinessId();
-      const ref = doc(collection(db,'users'), username);
-      const payload = { username, role, businessId, updatedAt:serverTimestamp() };
-      if(passwordHash) payload.passwordHash = passwordHash;
-      const exists = await getDoc(ref);
-      if(!exists.exists()){ payload.createdAt = serverTimestamp(); }
-      await setDoc(ref, payload, { merge:true });
-    }
-
-    window.addUserFromForm = async (e)=>{
-      e.preventDefault();
-      if(!isAdmin()){ alert('Solo el Administrador puede gestionar usuarios.'); return false; }
-      const username=document.getElementById('newUsername').value.trim();
-      const password=document.getElementById('newPassword').value;
-      const role    =document.getElementById('newRole').value;
-      if(!username||!password){ alert('Usuario y contraseña requeridos.'); return false; }
-      try{
-        const existing = await getUserDoc(username);
-        if(existing){ alert('Ese usuario ya existe.'); return false; }
-        const h = await hashPassword(password);
-        await upsertUserProfile(username, role, h);
-        document.getElementById('newUsername').value='';
-        document.getElementById('newPassword').value='';
-        document.getElementById('newRole').value='cajero';
-        alert('Usuario agregado y sincronizado.');
-        await renderUsersTable();
-      }catch(err){
-        console.warn(err); alert('No se pudo crear el usuario.');
-      }
-      return false;
-    };
-
-    window.deleteUser = async (username)=>{
-      if(!isAdmin()){ alert('Solo el Administrador puede eliminar usuarios.'); return; }
-      const me=getSessionUser();
-      if(me && me.username===username){ alert('No puedes eliminar tu propia cuenta.'); return; }
-      try{
-        const target = await getUserDoc(username);
-        if(!target){ alert('El usuario no existe.'); return; }
-        if(target.role==='admin'){
-          const admins = await countAdmins();
-          if(admins<=1){ alert('Debe existir al menos un administrador.'); return; }
-        }
-        await deleteDoc(doc(collection(db,'users'), username));
-        alert('Usuario eliminado.');
-        await renderUsersTable();
-      }catch(err){
-        console.warn(err); alert('No se pudo eliminar el usuario.');
-      }
-    };
-
-    // BASE CAJA
+    /********** BASE DE CAJA **********/
     function getBaseCajaLocal(){
       const data=JSON.parse(localStorage.getItem('baseCaja')||'null');
       if(!data) return null; if(data.fecha!==todayStr()) return null; return data;
@@ -556,24 +526,21 @@
       const payload={ fecha:todayStr(), counts, monto, usuario:u?.username||'N/A', hora:new Date().toLocaleString() };
       localStorage.setItem('baseCaja', JSON.stringify(payload)); updateBaseBadge();
     }
-    async function guardarBaseEnFirestore(counts, monto){
-      const businessId=getOrInitBusinessId(); const id=todayStr();
-      const ref=doc(collection(db,'bases'), id); const u=getSessionUser();
-      const data={ businessId, fecha:todayStr(), counts, monto, usuario:u?.username||'N/A', updatedAt:serverTimestamp(), createdAt:serverTimestamp() };
-      await setDoc(ref, data, { merge:true });
-      // espejo por usuario
-      const uref=doc(collection(db,'users', u?.username||'anon','bases'), id);
-      await setDoc(uref, data, { merge:true });
+    function updateBaseBadge(){
+      const base=getBaseCajaLocal(); const el=document.getElementById('baseBadge');
+      if(!el) return; el.textContent = base? `Base hoy: ${fmtMoney(base.monto)} (${base.usuario})` : `Base no registrada`; el.classList.remove('hidden');
     }
-    async function cargarBaseDesdeFirestore(){
-      try{
-        const id=todayStr(); const ref=doc(collection(db,'bases'), id); const snap=await getDoc(ref);
-        if(snap.exists()){
-          const data=snap.data();
-          localStorage.setItem('baseCaja', JSON.stringify({ fecha:data.fecha, counts:data.counts||{}, monto:data.monto||0, usuario:data.usuario||'N/A', hora:new Date().toLocaleString() }));
-          updateBaseBadge();
-        }
-      }catch(e){ console.warn('No se pudo cargar base desde Firestore:',e); }
+    function autoPromptBaseIfMissing(){ if(!getBaseCajaLocal()){ abrirModalBaseCaja(true); } }
+
+    async function guardarBaseEnFirestore(counts, monto){
+      const businessId=getOrInitBusinessId(); const id=todayStr(); const u=getSessionUser();
+      await setDoc(doc(collection(db,'bases'), id), {
+        businessId, fecha:todayStr(), counts, monto, usuario:u?.username||'N/A', updatedAt:serverTimestamp(), createdAt:serverTimestamp()
+      }, { merge:true });
+      // espejo por usuario
+      await setDoc(doc(collection(db,'users', u?.username||'anon','bases'), id), {
+        businessId, fecha:todayStr(), counts, monto, usuario:u?.username||'N/A', updatedAt:serverTimestamp(), createdAt:serverTimestamp()
+      }, { merge:true });
     }
 
     window.abrirModalBaseCaja = ()=>{
@@ -598,17 +565,12 @@
       const v1=document.getElementById('baseTotalValor'); const v2=document.getElementById('baseTotalTexto');
       if(v1) v1.textContent=fmtMoney(t); if(v2) v2.textContent=`Total base: ${fmtMoney(t)}`; }
     window.confirmarBaseCaja = async ()=>{
-      const u=getSessionUser(); const role=u?.role||'cajero'; const id=todayStr(); const ref=doc(collection(db,'bases'), id);
-      try{ const snap=await getDoc(ref); if(snap.exists() && role==='cajero'){ alert('La base ya está registrada hoy. Solo un administrador puede actualizarla.'); cerrarModalBaseCaja(); return; } }catch(_){}
       setBaseCajaLocal(baseCounts);
       try{ let monto=0; DENOMS.forEach(d=> monto+=(baseCounts[d]||0)*parseInt(d,10)); await guardarBaseEnFirestore(structuredClone(baseCounts), monto); }catch(e){ console.warn('save base cloud err:',e); }
       alert('Base de caja guardada.'); cerrarModalBaseCaja();
     };
 
-    // EFECTIVO RECIBIDO
-    window.abrirModalEfectivoRecibido = ()=>{ const m=document.getElementById('modalEfectivo'); m.classList.remove('hidden'); m.classList.add('flex'); buildMoneyButton('efDenomsContainer', efCounts, 'efTotalValor'); };
-    window.cerrarModalEfectivoRecibido = ()=>{ const m=document.getElementById('modalEfectivo'); m.classList.add('hidden'); m.classList.remove('flex'); };
-    window.confirmarEfectivoRecibido = ()=>{ cerrarModalEfectivoRecibido(); };
+    /********** EFECTIVO / VUELTO **********/
     function buildMoneyButton(containerId, stateMap, totalLabelId){
       const cont=document.getElementById(containerId); cont.innerHTML='';
       DENOMS.forEach(denom=>{
@@ -629,7 +591,10 @@
       if(totalLabelId==='efTotalValor'){ const lbl=document.getElementById('ef_total'); if(lbl) lbl.textContent=`Efectivo ingresado: ${fmtMoney(t)}`; }
     }
 
-    // VUELTO
+    window.abrirModalEfectivoRecibido = ()=>{ const m=document.getElementById('modalEfectivo'); m.classList.remove('hidden'); m.classList.add('flex'); buildMoneyButton('efDenomsContainer', efCounts, 'efTotalValor'); };
+    window.cerrarModalEfectivoRecibido = ()=>{ const m=document.getElementById('modalEfectivo'); m.classList.add('hidden'); m.classList.remove('flex'); };
+    window.confirmarEfectivoRecibido = ()=>{ cerrarModalEfectivoRecibido(); };
+
     window.abrirModalVuelto = (vuelto)=>{
       const m=document.getElementById('modalVuelto'); m.classList.remove('hidden'); m.classList.add('flex');
       document.getElementById('vueltoRequeridoTexto').textContent=`Vuelto requerido: ${fmtMoney(vuelto)}`;
@@ -646,7 +611,7 @@
         card.dataset.denom=denom; card.append(btnAdd,btnSub,counter); box.appendChild(card);
       });
       document.getElementById('totalDevueltoLabel').textContent=fmtMoney(0);
-      ventaTemporal = ventaTemporal || null;
+      document.getElementById('modalVuelto').dataset.temp='1';
     };
     window.cerrarModalVuelto = ()=>{ const m=document.getElementById('modalVuelto'); m.classList.add('hidden'); m.classList.remove('flex'); ventaTemporal=null; };
     window.confirmarVuelto = ()=>{
@@ -662,7 +627,7 @@
       persistirVenta(venta).then(()=>{ comandaEnEdicion=null; ventaTemporal=null; cerrarModalVuelto(); alert('Venta guardada.'); limpiarPedido(); mostrarVentas(); const rp=document.getElementById('resumenProductos'); if(rp) rp.classList.add('hidden'); }).catch(()=> alert('Error guardando venta.'));
     };
 
-    // GASTOS
+    /********** GASTOS **********/
     window.abrirModalGasto = ()=>{
       const m=document.getElementById('modalGasto'); m.classList.remove('hidden'); m.classList.add('flex');
       DENOMS.forEach(d=> gastoCounts[d]=0);
@@ -670,29 +635,30 @@
       buildMoneyButton('gastoDenomsContainer', gastoCounts, 'gastoEfectivoValor');
     };
     window.cerrarModalGasto = ()=>{ const m=document.getElementById('modalGasto'); m.classList.add('hidden'); m.classList.remove('flex'); };
+
     async function guardarGastoEnFirestore(payload){
-      const res = await addDoc(collection(db,'gastos'), { ...payload, createdAt:serverTimestamp() });
-      const user=getSessionUser();
-      await addDoc(collection(db,'users', user?.username||'anon', 'gastos'), { ...payload, createdAt:serverTimestamp() });
-      return res;
+      await addDoc(collection(db,'gastos'), { ...payload, createdAt:serverTimestamp() });
+      await addDoc(collection(db,'users', payload.usuario||'anon', 'gastos'), { ...payload, createdAt:serverTimestamp() });
     }
-    async function confirmarGasto(){
+
+    window.confirmarGasto = async ()=>{
       const desc=document.getElementById('gastoDescripcion').value.trim();
       const gastoTotal=parseInt(document.getElementById('gastoTotal').value||'0',10)||0;
       let pagadoEfectivo=0; DENOMS.forEach(d=> pagadoEfectivo += (gastoCounts[d]||0)*parseInt(d,10));
       if(!desc) return alert('Escribe la descripción del gasto.'); if(gastoTotal<=0) return alert('Escribe el total del gasto.');
-      // descontar de base local
-      DENOMS.forEach(d=>{ const curr=baseCounts[d]||0; const resta=gastoCounts[d]||0; baseCounts[d]=Math.max(0, curr-resta); });
-      setBaseCajaLocal(baseCounts);
-      try{ let monto=0; DENOMS.forEach(d=> monto+=(baseCounts[d]||0)*parseInt(d,10)); await guardarBaseEnFirestore(structuredClone(baseCounts), monto);}catch(e){console.warn('save base cloud err:',e);}
-      const businessId=getOrInitBusinessId(); const user=getSessionUser();
-      const payload={ businessId, descripcion:desc, total:gastoTotal, pagadoEfectivo, billetesUsados:structuredClone(gastoCounts), fecha:new Date().toLocaleString(), usuario:user?.username||'N/A', tipo:'gasto' };
-      try{ await guardarGastoEnFirestore(payload);}catch(e){ console.warn('save gasto cloud err:',e); }
-      const gl=JSON.parse(localStorage.getItem('gastos')||'[]'); gl.push({ ...payload, createdAt:Date.now() }); localStorage.setItem('gastos', JSON.stringify(gl));
-      alert('Gasto registrado.'); cerrarModalGasto(); updateBaseBadge(); mostrarVentas();
-    }
 
-    // PEDIDOS
+      // descontar de base local
+      const baseHoy=getBaseCajaLocal() || { counts:{} };
+      const nuevos={}; DENOMS.forEach(d=>{ const curr=baseHoy.counts[d]||0; const resta=gastoCounts[d]||0; nuevos[d]=Math.max(0, curr-resta); });
+      setBaseCajaLocal(nuevos);
+      try{ let monto=0; DENOMS.forEach(d=> monto+=(nuevos[d]||0)*parseInt(d,10)); await guardarBaseEnFirestore(structuredClone(nuevos), monto);}catch(e){console.warn('save base cloud err:',e);}
+
+      const payload={ businessId:getOrInitBusinessId(), descripcion:desc, total:gastoTotal, pagadoEfectivo, billetesUsados:structuredClone(gastoCounts), fecha:new Date().toLocaleString(), usuario:getSessionUser()?.username||'N/A', tipo:'gasto' };
+      try{ await guardarGastoEnFirestore(payload);}catch(e){ console.warn('save gasto cloud err:',e); }
+      alert('Gasto registrado.'); cerrarModalGasto(); updateBaseBadge(); mostrarVentas();
+    };
+
+    /********** PEDIDOS **********/
     window.agregarProducto = (nombre, precio)=>{ pedido.push({nombre,precio}); actualizarTotal(); actualizarVistaPedido(); };
     window.quitarProducto  = (i)=>{ if(i>=0 && i<pedido.length){ pedido.splice(i,1); actualizarTotal(); actualizarVistaPedido(); } };
     function actualizarTotal(){ total=pedido.reduce((a,p)=>a+p.precio,0); }
@@ -701,7 +667,7 @@
       pedido.forEach((p,i)=>{ const li=document.createElement('li'); li.innerHTML=`${p.nombre} - ${fmtMoney(p.precio)} <button onclick="quitarProducto(${i})" class='text-red-600 ml-2'>❌</button>`; lista.appendChild(li); });
       document.getElementById('total').textContent=`Total: ${fmtMoney(total)}`;
     }
-    window.toggleEfectivoSection = ()=>{ /* modal abre en onchange si es Efectivo */ };
+    window.toggleEfectivoSection = ()=>{ /* modal se abre en onchange si es efectivo */ };
     function getEfectivoRecibidoFromState(){
       const recibidos={}; let totalRec=0; DENOMS.forEach(d=>{ const c=efCounts[d]||0; recibidos[d]=c; totalRec += c*parseInt(d,10); });
       const el=document.getElementById('ef_total'); if(el) el.textContent=`Efectivo ingresado: ${fmtMoney(totalRec)}`;
@@ -714,16 +680,14 @@
       DENOMS.forEach(d=> efCounts[d]=0);
     };
 
-    // VENTAS
+    /********** VENTAS **********/
     async function guardarVentaEnFirestore(venta){
-      const res = await addDoc(collection(db,'ventas'), { ...venta, createdAt:serverTimestamp() });
-      const user=getSessionUser();
-      await addDoc(collection(db,'users', user?.username||'anon', 'ventas'), { ...venta, createdAt:serverTimestamp() });
-      return res;
+      await addDoc(collection(db,'ventas'), { ...venta, createdAt:serverTimestamp() });
+      await addDoc(collection(db,'users', venta.usuario||'anon', 'ventas'), { ...venta, createdAt:serverTimestamp() });
     }
     async function persistirVenta(venta){
       try{ await guardarVentaEnFirestore(venta); }catch(e){ console.warn('save venta cloud err:',e); }
-      const ventas=JSON.parse(localStorage.getItem('ventas')||'[]'); ventas.push({ ...venta, createdAt:Date.now() }); localStorage.setItem('ventas', JSON.stringify(ventas));
+      const ventas=JSON.parse(localStorage.getItem('ventas')||'[]'); ventas.push(venta); localStorage.setItem('ventas', JSON.stringify(ventas));
     }
     window.guardarVenta = async ()=>{
       if(!getSessionUser()){ showLoginModal(); return; }
@@ -745,62 +709,73 @@
       await persistirVenta(venta); comandaEnEdicion=null; alert('Venta guardada exitosamente.'); limpiarPedido(); mostrarVentas(); const rp=document.getElementById('resumenProductos'); if(rp) rp.classList.add('hidden');
     };
 
-    // CONSULTAS Firestore (admin ve todo por businessId; cajero filtra por usuario)
+    /********** CONSULTAS (ventas+gastos) **********/
     function tsKey(d){ if(!d) return 0; if(typeof d==='number') return d; if(d.seconds!==undefined) return d.seconds*1000+Math.floor((d.nanoseconds||0)/1e6); return 0; }
 
     async function cargarVentasDesdeFirestore(){
-      const businessId=getOrInitBusinessId();
-      const qRef=collection(db,'ventas');
-      const qy=query(qRef, where('businessId','==',businessId), orderBy('createdAt','desc'));
+      const qy=query(collection(db,'ventas'), where('businessId','==',getOrInitBusinessId()), orderBy('createdAt','desc'));
       const snap=await getDocs(qy);
-      let arr=snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      if(!isAdmin()){
-        const u=getSessionUser(); arr=arr.filter(x=> x.usuario===u?.username);
-      }
-      return arr;
+      return snap.docs.map(d=>({ id:d.id, ...d.data() }));
     }
     async function cargarGastosDesdeFirestore(){
-      const businessId=getOrInitBusinessId();
-      const qRef=collection(db,'gastos');
-      const qy=query(qRef, where('businessId','==',businessId), orderBy('createdAt','desc'));
+      const qy=query(collection(db,'gastos'), where('businessId','==',getOrInitBusinessId()), orderBy('createdAt','desc'));
       const snap=await getDocs(qy);
-      let arr=snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      if(!isAdmin()){
-        const u=getSessionUser(); arr=arr.filter(x=> x.usuario===u?.username);
-      }
-      return arr;
+      return snap.docs.map(d=>({ id:d.id, ...d.data() }));
     }
 
-    // TABLA principal
+    function aplicaFiltroUsuarioListado(items){
+      const sel=document.getElementById('filtroUsuario');
+      if(!isAdmin() || !sel) return items;
+      const v=sel.value||'__todos__';
+      if(v==='__todos__') return items;
+      return items.filter(x=> (x.usuario||'').toLowerCase()===v.toLowerCase());
+    }
+
     window.mostrarVentas = async ()=>{
       const cont=document.getElementById('ventasGuardadas'); if(!cont) return; cont.innerHTML='';
       let items=[];
       try{
-        const [ventasFS, gastosFS] = await Promise.all([ cargarVentasDesdeFirestore(), cargarGastosDesdeFirestore() ]);
-        items=[...ventasFS, ...gastosFS];
+        const [ventas,gastos]=await Promise.all([cargarVentasDesdeFirestore(), cargarGastosDesdeFirestore()]);
+        items=[...ventas, ...gastos];
       }catch(e){
         console.warn('Fallo lectura Firestore, uso LocalStorage:', e);
-        let ventasLS=JSON.parse(localStorage.getItem('ventas')||'[]');
-        let gastosLS=JSON.parse(localStorage.getItem('gastos')||'[]');
-        if(!isAdmin()){
-          const u=getSessionUser(); ventasLS=ventasLS.filter(x=>x.usuario===u?.username); gastosLS=gastosLS.filter(x=>x.usuario===u?.username);
-        }
-        items=[...ventasLS, ...gastosLS];
+        items = JSON.parse(localStorage.getItem('ventas')||'[]'); // aquí sólo ventas locales
       }
+
+      // Filtro por admin (usuario seleccionado)
+      items = aplicaFiltroUsuarioListado(items);
+
+      // Si no es admin, solo sus datos
+      if(!isAdmin()){
+        const me=getSessionUser()?.username||'';
+        items = items.filter(v=> (v.usuario||'')===me);
+      }
+
+      // Filtro texto
+      const filtro=(document.getElementById('filtroCliente')?.value||'').toLowerCase();
+
+      // Orden (createdAt desc si está)
       items.sort((a,b)=> tsKey(b.createdAt)-tsKey(a.createdAt));
+
+      // cache espejo local (para impresión rápida)
       localStorage.setItem('ventasTabla', JSON.stringify(items));
+
       items.forEach((v,i)=>{
-        const isGasto=v.tipo==='gasto';
-        let prodResumen='';
+        const isGasto = v.tipo==='gasto';
+        if (filtro) {
+          const match = [v.cliente||'', v.descripcion||'', v.usuario||''].join(' ').toLowerCase();
+          if (!match.includes(filtro)) return;
+        }
+        let productosResumen='';
         if(!isGasto){
           const r={}; (v.pedido||[]).forEach(p=> r[p.nombre]=(r[p.nombre]||0)+1 );
-          prodResumen = Object.entries(r).map(([n,c])=>`${n}: ${c}`).join('<br>');
-        }else{
-          prodResumen = `DESC: ${v.descripcion||''} · Pagado: ${fmtMoney(v.pagadoEfectivo||0)}`;
+          productosResumen = Object.entries(r).map(([n,c])=>`${n}: ${c}`).join('<br>');
+        } else {
+          productosResumen = `DESC: ${v.descripcion||''} · Pagado: ${fmtMoney(v.pagadoEfectivo||0)}`;
         }
-        const tipoBadge = isGasto ? `<span class="inline-block text-xs px-2 py-0.5 bg-rose-100 text-rose-700 rounded">Gasto</span>` : `<span class="inline-block text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded">Venta</span>`;
         const clienteTxt = isGasto ? (v.usuario||'') : (v.cliente||'');
         const formaTxt   = isGasto ? 'Efectivo/Salida' : (v.formaPago||'');
+        const tipoTxt    = isGasto ? '—' : (v.tipoPedido||'');
         const totalTxt   = isGasto ? `- ${fmtMoney(v.total||v.pagadoEfectivo||0)}` : `${fmtMoney(v.total||0)}`;
         const acciones   = isGasto ? `<span class="text-xs text-gray-400">—</span>` :
           `<button onclick="imprimirVentaCliente(${i})" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">🧾 Cliente</button>
@@ -809,69 +784,46 @@
         cont.innerHTML += `
           <tr>
             <td class='border p-1'>${v.comanda ?? (i+1)}</td>
-            <td class='border p-1'>${v.fecha||''}</td>
+            <td class='border p-1 whitespace-nowrap'>${v.fecha||''}</td>
+            <td class='border p-1'>${v.usuario||''}</td>
             <td class='border p-1'>${clienteTxt}</td>
             <td class='border p-1'>${formaTxt}</td>
-            <td class='border p-1'>${tipoBadge}</td>
-            <td class='border p-1'>${prodResumen}</td>
+            <td class='border p-1'>${tipoTxt}</td>
+            <td class='border p-1'>${productosResumen}</td>
             <td class='border p-1'>${totalTxt}</td>
             <td class='border p-1 space-x-1'>${acciones}</td>
           </tr>`;
       });
+
+      // además, guarda sólo ventas (para impresiones por índice) si el array viene mixto
+      const ventasSolo = items.filter(x=> x.tipo!=='gasto');
+      localStorage.setItem('ventas', JSON.stringify(ventasSolo));
     };
 
-    window.filtrarVentasPorCliente = ()=>{
-      const filtro=(document.getElementById('filtroCliente').value||'').toLowerCase();
-      const items=JSON.parse(localStorage.getItem('ventasTabla')||'[]');
-      const cont=document.getElementById('ventasGuardadas'); const admin=isAdmin(); cont.innerHTML='';
-      items.forEach((v,i)=>{
-        const isGasto=v.tipo==='gasto';
-        const matchText=[ v.cliente||'', v.descripcion||'', v.usuario||'' ].join(' ').toLowerCase();
-        if(!matchText.includes(filtro)) return;
-        let prodResumen='';
-        if(!isGasto){ const r={}; (v.pedido||[]).forEach(p=> r[p.nombre]=(r[p.nombre]||0)+1 ); prodResumen = Object.entries(r).map(([n,c])=>`${n}: ${c}`).join('<br>'); }
-        else{ prodResumen = `DESC: ${v.descripcion||''} · Pagado: ${fmtMoney(v.pagadoEfectivo||0)}`; }
-        const tipoBadge=isGasto? `<span class="inline-block text-xs px-2 py-0.5 bg-rose-100 text-rose-700 rounded">Gasto</span>`:`<span class="inline-block text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded">Venta</span>`;
-        const clienteTxt=isGasto?(v.usuario||''):(v.cliente||''); const formaTxt=isGasto?'Efectivo/Salida':(v.formaPago||'');
-        const totalTxt=isGasto?`- ${fmtMoney(v.total||v.pagadoEfectivo||0)}`:`${fmtMoney(v.total||0)}`;
-        const acciones=isGasto? `<span class="text-xs text-gray-400">—</span>`:
-          `<button onclick="imprimirVentaCliente(${i})" class="bg-purple-500 text-white px-2 py-1 rounded text-xs">🧾 Cliente</button>
-           <button onclick="imprimirVentaCocina(${i})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">👨‍🍳 Cocina</button>
-           ${admin? `<button onclick="editarVenta(${i})" class="bg-yellow-600 text-white px-2 py-1 rounded text-xs">📝 Editar</button>`:''}`;
-        cont.innerHTML += `
-          <tr>
-            <td class='border p-1'>${v.comanda ?? (i+1)}</td>
-            <td class='border p-1'>${v.fecha||''}</td>
-            <td class='border p-1'>${clienteTxt}</td>
-            <td class='border p-1'>${formaTxt}</td>
-            <td class='border p-1'>${tipoBadge}</td>
-            <td class='border p-1'>${prodResumen}</td>
-            <td class='border p-1'>${totalTxt}</td>
-            <td class='border p-1 space-x-1'>${acciones}</td>
-          </tr>`;
-      });
-    };
+    window.filtrarVentasPorCliente = ()=>{ mostrarVentas(); };
 
-    // EXCEL (ventas + gastos en hojas separadas, ya listo)
+    /********** EXPORTAR **********/
     window.exportarVentasExcelConEstilo = async ()=>{
-      if(!isAdmin()){ alert('Solo el Administrador puede exportar a Excel.'); return; }
+      if(!isAdmin()){ alert("Solo el Administrador puede exportar a Excel."); return; }
       let ventas=[]; let gastos=[];
-      try{ ventas=await cargarVentasDesdeFirestore(); }catch{}
-      try{ gastos=await cargarGastosDesdeFirestore(); }catch{}
-      if(ventas.length===0 && gastos.length===0){ alert('No hay información registrada.'); return; }
+      try{ [ventas,gastos] = await Promise.all([cargarVentasDesdeFirestore(), cargarGastosDesdeFirestore()]); }catch{}
+      ventas = aplicaFiltroUsuarioListado(ventas);
+      gastos = aplicaFiltroUsuarioListado(gastos);
+      if( !ventas.length && !gastos.length ){ return alert("No hay datos para exportar."); }
+
       const wb=new ExcelJS.Workbook();
 
       // Ventas
       const s=wb.addWorksheet('Ventas del Día');
-      const H=["#","Fecha","Cliente","Forma de Pago","Tipo de Pedido","Producto","Precio (COP)","Total Venta (COP)"];
+      const H=["#","Fecha","Usuario","Cliente","Forma de Pago","Tipo de Pedido","Producto","Precio (COP)","Total Venta (COP)"];
       s.addRow(H);
       let totalGlobal=0; const conteo={};
-      ventas.forEach((v,i)=>{ const {fecha,cliente,formaPago,tipoPedido,total,pedido}=v; totalGlobal += parseFloat(total)||0;
-        (pedido||[]).forEach(p=>{ s.addRow([v.comanda??(i+1), fecha, cliente, formaPago, tipoPedido, p.nombre, parseFloat(p.precio), parseFloat(total)]); conteo[p.nombre]=(conteo[p.nombre]||0)+1; });
+      ventas.forEach((v,i)=>{ const {fecha,cliente,formaPago,tipoPedido,total,pedido,usuario}=v; totalGlobal += parseFloat(total)||0;
+        (pedido||[]).forEach(p=>{ s.addRow([v.comanda??(i+1), fecha, usuario, cliente, formaPago, tipoPedido, p.nombre, parseFloat(p.precio), parseFloat(total)]); conteo[p.nombre]=(conteo[p.nombre]||0)+1; });
       });
       s.getRow(1).eachCell(c=>{ c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F4E78'}}; c.font={color:{argb:'FFFFFFFF'},bold:true}; c.alignment={vertical:'middle',horizontal:'center'}; c.border={top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}}; });
-      for(let r=2;r<=s.rowCount;r++){ const row=s.getRow(r); const even=r%2===0; row.eachCell(c=>{ c.fill={type:'pattern',pattern:'solid',fgColor:{argb:even?'FFF2F2F2':'FFFFFFFF'}}; c.border={top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}}; }); row.getCell(7).numFmt='"$"#,##0'; row.getCell(8).numFmt='"$"#,##0'; }
-      s.addRow([]); const tr=s.addRow(["","","","","","TOTAL DEL DÍA:","",totalGlobal]); tr.getCell(8).numFmt='"$"#,##0'; tr.font={bold:true};
+      for(let r=2;r<=s.rowCount;r++){ const row=s.getRow(r); const even=r%2===0; row.eachCell(c=>{ c.fill={type:'pattern',pattern:'solid',fgColor:{argb:even?'FFF2F2F2':'FFFFFFFF'}}; c.border={top:{style:'thin'},bottom:{style:'thin'},left:{style:'thin'},right:{style:'thin'}}; }); row.getCell(8).numFmt='"$"#,##0'; row.getCell(9).numFmt='"$"#,##0'; }
+      s.addRow([]); const tr=s.addRow(["","","","","","TOTAL DEL DÍA:","",totalGlobal]); tr.getCell(9).numFmt='"$"#,##0'; tr.font={bold:true};
       let prodMas="", max=0; for(const [k,v] of Object.entries(conteo)){ if(v>max){ max=v; prodMas=k; } }
       const r2=s.addRow(["","","","","","Producto más vendido:","",`${prodMas} (${max})`]); r2.font={italic:true};
       s.columns.forEach(c=> c.width=18);
@@ -895,13 +847,14 @@
       document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
     };
 
-    // CIERRE (igual a versión previa)
+    /********** CIERRE **********/
     window.cierreDeCaja = ()=>{
-      const ventas=JSON.parse(localStorage.getItem('ventas')||'[]');
+      const items=JSON.parse(localStorage.getItem('ventasTabla')||'[]'); // usamos combinados
       const base=getBaseCajaLocal(); const sumRec={}, sumDev={}, sumNet={}, finalCounts={};
       let montoRec=0,montoDev=0,montoNet=0,montoBase=0,montoFinal=0;
       DENOMS.forEach(d=>{sumRec[d]=0;sumDev[d]=0;sumNet[d]=0;finalCounts[d]=0;});
-      ventas.forEach(v=>{ DENOMS.forEach(d=>{ sumRec[d]+=(v.billetesRecibidos?.[d]||0); sumDev[d]+=(v.billetesDevueltos?.[d]||0); }); });
+      // sólo ventas afectan efectivo recibido/devuelto
+      items.filter(v=>v.tipo==='venta').forEach(v=>{ DENOMS.forEach(d=>{ sumRec[d]+=(v.billetesRecibidos?.[d]||0); sumDev[d]+=(v.billetesDevueltos?.[d]||0); }); });
       DENOMS.forEach(d=>{
         sumNet[d]=sumRec[d]-sumDev[d];
         const baseCnt=base?.counts?.[d]||0;
@@ -931,47 +884,176 @@
       const w=window.open('','_blank','width=460,height=720'); w.document.write(html); w.document.close(); w.focus();
     };
 
-    // EDITAR / COMANDA
+    /********** IMPRESIONES **********/
+    window.imprimirUltimaCocinero = ()=>{
+      const ventas=JSON.parse(localStorage.getItem("ventas")||"[]");
+      if(ventas.length===0) return alert("No hay ventas para imprimir.");
+      const v=ventas[ventas.length-1];
+      const resumen={}; (v.pedido||[]).forEach(p=> resumen[p.nombre]=(resumen[p.nombre]||0)+1 );
+      const contenido = `
+        <!DOCTYPE html><html><head><style>
+          body{font-family:monospace;font-size:15px;margin:0;padding:11px;}
+          h2{text-align:center;font-size:19px;margin-bottom:11px;}
+          .info{margin-bottom:10px;} .info p{margin:2px 0;}
+          ul{list-style:none;padding:0;margin:0;} li{padding:4px 0;border-bottom:2px dashed #000;font-size:19px;}
+        </style></head><body>
+          <h2>🧾 PEDIDO A COCINA</h2>
+          <div class="info">
+            <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? ventas.length}</p>
+            <p><strong>Cliente:</strong> ${v.cliente || "Sin nombre"}</p>
+            <p><strong>Hora:</strong> ${v.fecha || "Sin hora"}</p>
+            <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
+            ${v.observaciones ? `<p><strong>Observaciones:</strong> ${v.observaciones}</p>` : ""}
+          </div>
+          <ul>${Object.entries(resumen).map(([producto, cantidad]) => `<li>${producto} x${cantidad}</li>`).join("")}</ul>
+          <p style="text-align:center;margin-top:10px;">👨‍🍳 Preparar con cuidado</p>
+          <script>window.print();<\/script>
+        </body></html>`;
+      const w=window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+    };
+    window.imprimirUltimaCliente = ()=>{
+      const ventas=JSON.parse(localStorage.getItem("ventas")||"[]");
+      if(ventas.length===0) return alert("No hay ventas para imprimir.");
+      const v=ventas[ventas.length-1];
+      const contenido = `
+        <html><head><title>Recibo Cliente</title><style>
+          body{font-family:monospace;font-size:14px;width:58mm;padding:10px 12px;margin:0;line-height:1.5;}
+          h2{text-align:center;font-size:19px;margin:14px 0 5px;font-weight:bold;}
+          .sub-info{text-align:center;font-size:12px;margin-bottom:10px;line-height:1.3;}
+          .line{border-top:1px dashed #000;margin:9px 0;} ul{list-style:none;padding:0;margin:0;} li{margin-bottom:7px;}
+          .total{text-align:right;font-weight:bold;margin-top:14px;font-size:16px;} .info p{margin:6px 0;} .info strong{font-weight:bold;}
+          p.thanks{text-align:center;margin-top:22px;font-weight:bold;font-size:15px;}
+        </style></head><body>
+          <h2>SEÑOR AREPA</h2>
+          <div class="sub-info">Matrícula No 289546<br>CALLE 19#25-03 ESQUINA<br>BARRIO SAN JOSÉ, ARMENIA</div>
+          <div class="line"></div>
+          <div class="info">
+            <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? ventas.length}</p>
+            <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? ventas.length}</p>
+            <p><strong>Cliente:</strong> ${v.cliente || "N/A"}</p>
+            <p><strong>Fecha:</strong> ${v.fecha}</p>
+            <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
+            ${v.observaciones ? `<p><strong>Observaciones:</strong> ${v.observaciones}</p>` : ""}
+          </div>
+          <div class="line"></div>
+          <ul>${(v.pedido||[]).map(p => `<li>${p.nombre} - ${fmtMoney(p.precio)}</li>`).join("")}</ul>
+          <div class="line"></div>
+          <p class="total">Total: ${fmtMoney(v.total||0)}</p>
+          <div class="line"></div>
+          <p class="thanks">¡Gracias por su compra!</p>
+          <script>window.print();<\/script>
+        </body></html>`;
+      const w=window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+    };
+    window.imprimirVentaCliente = (index)=>{
+      const ventas=JSON.parse(localStorage.getItem("ventas")||"[]"); const v=ventas[index]; if(!v) return alert("Venta no encontrada.");
+      const contenido = `
+        <html><head><title>Recibo Cliente</title><style>
+          body{font-family:monospace;font-size:14px;width:58mm;padding:10px 12px;margin:0;line-height:1.5;}
+          h2{text-align:center;font-size:19px;margin:14px 0;font-weight:bold;}
+          .line{border-top:1px dashed #000;margin:9px 0;} ul{list-style:none;padding:0;margin:0;} li{margin-bottom:7px;}
+          .total{text-align:right;font-weight:bold;margin-top:14px;font-size:16px;} .info p{margin:6px 0;} .info strong{font-weight:bold;}
+          p.thanks{text-align:center;margin-top:22px;font-weight:bold;font-size:15px;}
+        </style></head><body>
+          <h2>SEÑOR AREPA</h2>
+          <div class="line"></div>
+          <div class="info">
+            <p style="text-align:center;font-weight:bold;margin:6px 0;">RECIBO #${v.comanda ?? (index + 1)}</p>
+            <p style="text-align:center;font-weight:bold;margin:6px 0;">COMANDA #${v.comanda ?? (index + 1)}</p>
+            <p><strong>Cliente:</strong> ${v.cliente || "N/A"}</p>
+            <p><strong>Fecha:</strong> ${v.fecha}</p>
+            <p><strong>Tipo de Pedido:</strong> ${v.tipoPedido || "-"}</p>
+            ${v.observaciones ? `<p><strong>Observaciones:</strong> ${v.observaciones}</p>` : ""}
+          </div>
+          <div class="line"></div>
+          <ul>${(v.pedido||[]).map(p => `<li>${p.nombre} - ${fmtMoney(p.precio)}</li>`).join("")}</ul>
+          <div class="line"></div>
+          <p class="total">Total: ${fmtMoney(v.total||0)}</p>
+          <div class="line"></div>
+          <p class="thanks">¡Gracias por su compra!</p>
+          <script>window.print();<\/script>
+        </body></html>`;
+      const w=window.open("", "_blank", "width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
+    };
+
+    /********** EDITAR / COMANDA **********/
     window.editarVenta = (index)=>{
       if(!isAdmin()){ alert('Solo el Administrador puede editar ventas.'); return; }
-      const items=JSON.parse(localStorage.getItem('ventasTabla')||'[]'); const v=items[index];
-      if(!v) return alert('Elemento no encontrado.'); if(v.tipo==='gasto') return alert('Los gastos no se editan desde aquí.');
-      const ventasLocal=JSON.parse(localStorage.getItem('ventas')||'[]');
+      const ventas=JSON.parse(localStorage.getItem('ventas')||'[]');
+      const v=ventas[index];
+      if(!v) return alert('Venta no encontrada.');
       document.getElementById('cliente').value=v.cliente||''; document.getElementById('formaPago').value=v.formaPago||''; document.getElementById('tipoPedido').value=v.tipoPedido||''; document.getElementById('observaciones').value=v.observaciones||'';
       pedido=[...(v.pedido||[])]; total=v.total||0; actualizarVistaPedido(); comandaEnEdicion=v.comanda??null;
-      const idxLoc=ventasLocal.findIndex(x=> (x.fecha===v.fecha && x.cliente===v.cliente && x.total===v.total));
-      if(idxLoc>=0){ ventasLocal.splice(idxLoc,1); localStorage.setItem('ventas', JSON.stringify(ventasLocal)); }
+      ventas.splice(index,1); localStorage.setItem('ventas', JSON.stringify(ventas));
       mostrarVentas(); alert("Venta cargada para edición. Haz los cambios y presiona 'Guardar Venta'.");
     };
     window.obtenerSiguienteComanda = ()=>{
       const key="ultimoNumeroComanda"; const ultimo=parseInt(localStorage.getItem(key)||'0',10); const siguiente=ultimo+1; localStorage.setItem(key,String(siguiente)); return siguiente;
     };
 
-    // RESUMEN / BORRAR
+    /********** ADMIN: crear / eliminar **********/
+    window.addUserFromForm = async (e)=>{
+      e.preventDefault();
+      if(!isAdmin()){ alert('Solo el Administrador puede gestionar usuarios.'); return false; }
+      const username=document.getElementById('newUsername').value.trim();
+      const password=document.getElementById('newPassword').value;
+      const role    =document.getElementById('newRole').value;
+      if(!username||!password){ alert('Usuario y contraseña requeridos.'); return false; }
+      try{
+        const exists=await getUserDoc(username);
+        if(exists){ alert('Ese usuario ya existe.'); return false; }
+        const h=await hashPassword(password);
+        await upsertUserProfile(username, role, h);
+        alert('Usuario agregado en la nube.');
+        document.getElementById('newUsername').value='';
+        document.getElementById('newPassword').value='';
+        document.getElementById('newRole').value='cajero';
+        await renderUsersTable();
+      }catch(err){ console.warn(err); alert('No se pudo crear el usuario.'); }
+      return false;
+    };
+
+    window.deleteUser = async (username)=>{
+      if(!isAdmin()){ alert('Solo el Administrador puede eliminar usuarios.'); return; }
+      const me=getSessionUser();
+      if(me && me.username===username){ alert('No puedes eliminar tu propia cuenta.'); return; }
+      try{
+        const target=await getUserDoc(username);
+        if(!target){ alert('El usuario no existe.'); return; }
+        if(target.role==='admin'){
+          const admins = await countAdmins();
+          if(admins<=1){ alert('Debe existir al menos un administrador.'); return; }
+        }
+        // En este flujo, NO borramos del historial global para no romper referencias; podrías agregar un flag "disabled".
+        await setDoc(doc(collection(db,'users'), username), { disabled:true, updatedAt:serverTimestamp() }, { merge:true });
+        alert('Usuario deshabilitado. (Se conserva para historial)');
+        await renderUsersTable();
+      }catch(err){ console.warn(err); alert('No se pudo eliminar/deshabilitar el usuario.'); }
+    };
+
+    /********** RESUMEN / BORRAR **********/
     window.generarResumenProductos = ()=>{
       if(!isAdmin()){ alert('Solo el Administrador puede ver resumen de productos.'); return; }
-      const ventas=JSON.parse(localStorage.getItem('ventas')||'[]'); const r={}; ventas.forEach(v=> (v.pedido||[]).forEach(p=> r[p.nombre]=(r[p.nombre]||0)+1 ));
+      const items=JSON.parse(localStorage.getItem('ventasTabla')||'[]').filter(x=>x.tipo==='venta');
+      const r={}; items.forEach(v=> (v.pedido||[]).forEach(p=> r[p.nombre]=(r[p.nombre]||0)+1 ));
       const ul=document.getElementById('listaResumen'); ul.innerHTML=Object.entries(r).map(([n,c])=>`<li>${n}: ${c}</li>`).join(''); document.getElementById('resumenProductos').classList.remove('hidden');
     };
     window.borrarVentas = ()=>{
-      if(!isAdmin()){ alert('Solo el Administrador puede borrar ventas.'); return; }
-      if(confirm('¿Seguro que deseas borrar TODAS las ventas y gastos locales?')){ localStorage.removeItem('ventas'); localStorage.removeItem('gastos'); mostrarVentas(); alert('Historial local borrado.'); }
+      if(!isAdmin()){ alert('Solo el Administrador puede borrar ventas locales.'); return; }
+      if(confirm('¿Seguro que deseas borrar el cache local?')){ localStorage.removeItem('ventas'); localStorage.removeItem('ventasTabla'); mostrarVentas(); alert('Cache local borrado. (Cloud se mantiene)'); }
     };
 
-    // INIT
+    /********** INIT **********/
     window.onload = async ()=>{
       try{ await ensureDefaultUsersInFirestore(); }catch{}
       const u=getSessionUser();
       if(!u) showLoginModal(); else hideLoginModal();
       applyRoleUI();
-      if(isAdmin()){ await renderUsersTable(); }
-      await cargarBaseDesdeFirestore();
-      setInterval(()=> cargarBaseDesdeFirestore().catch(()=>{}), 60000);
+      await renderUsersTable();
       try{ await mostrarVentas(); }catch(e){ console.warn(e); }
       if(u) autoPromptBaseIfMissing();
     };
-
-    function autoPromptBaseIfMissing(){ if(!getBaseCajaLocal()){ abrirModalBaseCaja(true); } }
   </script>
 </body>
 </html>
+
