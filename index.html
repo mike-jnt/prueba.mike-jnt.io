@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SEÑOR AREPA — v6 (100% Firestore, sin local)</title>
+  <title>SEÑOR AREPA — v6.1 (100% Firestore, realtime ventas)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
@@ -156,10 +156,10 @@
       <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <h3 class="text-lg font-semibold">Ventas Guardadas</h3>
         <div class="flex flex-col md:flex-row gap-2 md:items-center">
-          <input id="filtroCliente" oninput="mostrarVentas()" placeholder="🔍 Filtrar por cliente..." class="w-full md:w-64 p-2 border border-yellow-300 rounded" />
+          <input id="filtroCliente" oninput="renderVentasFromCache()" placeholder="🔍 Filtrar por cliente..." class="w-full md:w-64 p-2 border border-yellow-300 rounded" />
           <div id="filtroUsuarioWrap" class="hidden md:flex items-center gap-2">
             <label class="text-sm text-gray-700">Usuario:</label>
-            <select id="filtroUsuario" class="p-2 border rounded" onchange="mostrarVentas()">
+            <select id="filtroUsuario" class="p-2 border rounded" onchange="renderVentasFromCache()">
               <option value="__todos__">Todos</option>
             </select>
           </div>
@@ -218,7 +218,7 @@
     </div>
   </main>
 
-  <!-- MODALES -->
+  <!-- MODALES (idénticos a versión anterior) -->
   <!-- Vuelto -->
   <div id="modalVuelto" class="fixed inset-0 bg-black/50 hidden z-50 items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
@@ -346,7 +346,8 @@
     import {
       initializeFirestore,
       memoryLocalCache,
-      collection, addDoc, getDocs, getDoc, query, where, orderBy, serverTimestamp, doc, setDoc, runTransaction, limit, deleteDoc, increment
+      collection, addDoc, getDocs, getDoc, query, where, orderBy, serverTimestamp, doc, setDoc, runTransaction, limit, deleteDoc,
+      onSnapshot
     } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -367,7 +368,12 @@
     let total = 0;
     let ventaTemporal = null;
     let comandaEnEdicion = null;
-    let currentVentas = []; // espejo en memoria para UI
+
+    // Ventas en memoria + subcripción realtime
+    let allVentasCache = [];
+    let currentVentas = [];
+    let unsubscribeVentas = null;
+
     const efCounts = {}, baseCounts = {}, gastoCounts = {};
 
     /********** UTILES **********/
@@ -380,12 +386,19 @@
       return `${y}-${m}-${day}`;
     };
 
-    /********** SESIÓN (en memoria) **********/
+    /********** SESIÓN **********/
     let sessionUser = null;
     const isAdmin = () => sessionUser?.role === 'admin';
     const showLoginModal = () => { const m = document.getElementById('loginModal'); m.classList.remove('hidden'); m.classList.add('flex'); };
     const hideLoginModal = () => { const m = document.getElementById('loginModal'); m.classList.add('hidden'); m.classList.remove('flex'); };
-    window.logout = () => { sessionUser = null; applyRoleUI(); showLoginModal(); };
+    window.logout = () => {
+      if (unsubscribeVentas) { unsubscribeVentas(); unsubscribeVentas=null; }
+      sessionUser = null;
+      allVentasCache = [];
+      renderVentasFromCache();
+      applyRoleUI();
+      showLoginModal();
+    };
 
     /********** USUARIOS **********/
     async function upsertUser({username, role, password, fullname=''}) {
@@ -395,7 +408,6 @@
       }, { merge: true });
     }
     async function ensureDefaultUsers(){
-      // crea/actualiza siempre; no guarda nada local
       await upsertUser({username:'admin', role:'admin', password:'admin123', fullname:'Administrador'});
       await upsertUser({username:'cajero', role:'cajero', password:'caja123', fullname:'Cajero'});
     }
@@ -456,8 +468,8 @@
       sessionUser = { username: data.username, role: data.role, fullname: data.fullname||'' };
       hideLoginModal();
       await applyRoleUI();
-      await mostrarVentas();
       await autoPromptBaseIfMissing();
+      subscribeVentasRealtime(); // <—— activar realtime justo al iniciar sesión
       return false;
     };
 
@@ -543,10 +555,8 @@
     window.abrirModalBaseCaja = async () => {
       const m = document.getElementById('modalBaseCaja');
       m.classList.remove('hidden'); m.classList.add('flex');
-      // precargar con base de hoy
       const base = await getBaseDocToday();
       DENOMS.forEach(d=> baseCounts[d] = base?.counts?.[d] || 0);
-      const cont = document.getElementById('baseDenomsContainer'); cont.innerHTML='';
       buildMoneyButton('baseDenomsContainer', baseCounts, 'baseTotalValor');
       document.getElementById('baseTotalTexto').textContent = `Total base: ${fmtMoney(Object.entries(baseCounts).reduce((s,[d,c])=>s+parseInt(d,10)*(c||0),0))}`;
       document.getElementById('baseMetaInfo').textContent = base ? `Registrada por ${base.usuario} — ${base.hora}` : `No hay base registrada para hoy (${todayStr()}).`;
@@ -557,7 +567,6 @@
     window.confirmarBaseCaja = async () => {
       if(!sessionUser) return showLoginModal();
       const id = `${BUSINESS_ID}_${todayStr()}`;
-      // si ya existe y es cajero, no puede sobreescribir
       const prev = await getDoc(doc(db,'bases',id));
       if (prev.exists() && !isAdmin()) return alert("La base de hoy ya fue registrada. Solo Admin puede actualizarla.");
       let monto=0; DENOMS.forEach(d=> monto+=(baseCounts[d]||0)*parseInt(d,10));
@@ -602,7 +611,6 @@
         box.appendChild(card);
       });
       document.getElementById('totalDevueltoLabel').textContent = fmtMoney(0);
-      // guarda temporal para validar al confirmar
       (document.getElementById('modalVuelto')).dataset.temp="1";
     };
     window.cerrarModalVuelto = () => {
@@ -624,7 +632,7 @@
       cerrarModalVuelto();
       alert("Venta guardada.");
       limpiarPedido();
-      await mostrarVentas();
+      // no hace falta llamar mostrarVentas(); el listener realtime actualizará la tabla
       document.getElementById("resumenProductos").classList.add("hidden");
     };
 
@@ -640,7 +648,6 @@
     };
     async function guardarGastoEnFirestore(payload){
       await addDoc(collection(db,'gastos'), { ...payload, createdAt: serverTimestamp() });
-      // espejo (opcional): users/{u}/gastos
       await addDoc(collection(db,'users',payload.usuario,'gastos'), { ...payload, createdAt: serverTimestamp() });
     }
     window.confirmarGasto = async () => {
@@ -650,7 +657,6 @@
       if(!desc) return alert('Escribe la descripción.'); if(totalG<=0) return alert('Escribe el total del gasto.');
       let pagadoEfectivo=0; DENOMS.forEach(d=> pagadoEfectivo += (gastoCounts[d]||0)*parseInt(d,10));
 
-      // Descontar de la base actual
       const idBase = `${BUSINESS_ID}_${todayStr()}`;
       const ds = await getDoc(doc(db,'bases',idBase));
       if(!ds.exists()) return alert("Primero registra la base de caja.");
@@ -673,7 +679,6 @@
       await updateBaseBadge();
       cerrarModalGasto();
       alert('Gasto registrado.');
-      await mostrarVentas(); // refresca
     };
 
     /********** PEDIDO **********/
@@ -696,11 +701,9 @@
       DENOMS.forEach(d=> efCounts[d]=0);
     };
 
-    /********** VENTAS **********/
+    /********** VENTAS (CRUD + REALTIME) **********/
     async function guardarVentaEnFirestore(venta){
-      // global
       await addDoc(collection(db,'ventas'), { ...venta, createdAt: serverTimestamp() });
-      // espejo por usuario
       await addDoc(collection(db,'users', venta.usuario, 'ventas'), { ...venta, createdAt: serverTimestamp() });
     }
 
@@ -748,33 +751,46 @@
       comandaEnEdicion=null;
       alert("Venta guardada.");
       limpiarPedido();
-      await mostrarVentas();
+      // La tabla se actualiza sola por onSnapshot
       document.getElementById("resumenProductos").classList.add("hidden");
     };
 
-    async function cargarVentasDesdeFirestore(){
+    // Suscripción realtime a ventas (filtrada por rol)
+    function subscribeVentasRealtime(){
+      if (unsubscribeVentas) { unsubscribeVentas(); unsubscribeVentas=null; }
       let qy = query(collection(db,'ventas'), where('businessId','==',BUSINESS_ID), orderBy('createdAt','desc'));
       if(!isAdmin()){
-        qy = query(collection(db,'ventas'), where('businessId','==',BUSINESS_ID), where('usuario','==',sessionUser.username), orderBy('createdAt','desc'));
+        qy = query(collection(db,'ventas'),
+          where('businessId','==',BUSINESS_ID),
+          where('usuario','==',sessionUser.username),
+          orderBy('createdAt','desc')
+        );
       }
-      const snap = await getDocs(qy);
-      return snap.docs.map(d=> ({ id:d.id, ...d.data() }));
+      unsubscribeVentas = onSnapshot(qy, (snap)=>{
+        allVentasCache = snap.docs.map(d=> ({ id:d.id, ...d.data() }));
+        renderVentasFromCache();
+      }, (err)=> {
+        console.warn('onSnapshot ventas error:', err);
+      });
     }
 
-    function aplicaFiltroUsuarioListado(ventas){
-      if(!isAdmin()) return ventas;
-      const sel = document.getElementById('filtroUsuario'); if(!sel) return ventas;
-      const v = sel.value || '__todos__'; if(v==='__todos__') return ventas;
-      return ventas.filter(x => (x.usuario||'').toLowerCase() === v.toLowerCase());
-    }
-
-    window.mostrarVentas = async () => {
+    // Render con filtros sin re-consultar
+    function renderVentasFromCache(){
       const cont = document.getElementById('ventasGuardadas'); if(!cont) return;
       cont.innerHTML='';
-      let ventas = await cargarVentasDesdeFirestore();
       const filtroCliente = (document.getElementById('filtroCliente')?.value||'').toLowerCase();
-      ventas = aplicaFiltroUsuarioListado(ventas).filter(v => !filtroCliente || (v.cliente||'').toLowerCase().includes(filtroCliente));
+      let ventas = [...allVentasCache];
+
+      if (isAdmin()) {
+        const sel = document.getElementById('filtroUsuario');
+        const v = sel ? (sel.value || '__todos__') : '__todos__';
+        if (v !== '__todos__') ventas = ventas.filter(x => (x.usuario||'').toLowerCase() === v.toLowerCase());
+      }
+
+      if (filtroCliente) ventas = ventas.filter(v => (v.cliente||'').toLowerCase().includes(filtroCliente));
+
       currentVentas = ventas;
+
       ventas.forEach((v,i)=>{
         const resumen = {};
         (v.pedido||[]).forEach(p=> resumen[p.nombre]=(resumen[p.nombre]||0)+1 );
@@ -797,14 +813,13 @@
             </td>
           </tr>`;
       });
-    };
+    }
 
     window.eliminarVenta = async (i) => {
       if(!isAdmin()) return alert("Solo Admin.");
       const v = currentVentas[i]; if(!v?.id) return;
       await deleteDoc(doc(db,'ventas', v.id));
-      alert("Venta eliminada.");
-      await mostrarVentas();
+      // onSnapshot actualizará la UI automáticamente
     };
 
     window.editarVenta = (i) => {
@@ -821,15 +836,20 @@
 
     /********** EXPORTAR EXCEL (Ventas + Gastos) **********/
     async function cargarGastosHoy(){
-      // filtra por fecha de texto incluye hoy (simple). Ideal: guardar date-only en doc aparte.
       const snap = await getDocs(query(collection(db,'gastos'), where('businessId','==',BUSINESS_ID), orderBy('createdAt','desc')));
       const hoy = todayStr();
       return snap.docs.map(d=>({id:d.id,...d.data()})).filter(g => (g.fecha||'').includes(hoy));
     }
     window.exportarVentasExcelConEstilo = async () => {
       if(!isAdmin()) return alert("Solo Admin.");
-      let ventas = await cargarVentasDesdeFirestore();
-      ventas = aplicaFiltroUsuarioListado(ventas);
+      let ventas = [...allVentasCache];
+      // aplica filtro usuario (admin)
+      if (isAdmin()) {
+        const sel = document.getElementById('filtroUsuario');
+        if (sel && sel.value && sel.value !== '__todos__') {
+          ventas = ventas.filter(x => (x.usuario||'').toLowerCase() === sel.value.toLowerCase());
+        }
+      }
       if(ventas.length===0) return alert("No hay ventas.");
       const gastos = await cargarGastosHoy();
 
@@ -868,7 +888,7 @@
 
     /********** CIERRE DE CAJA **********/
     window.cierreDeCaja = async () => {
-      const ventas = await cargarVentasDesdeFirestore();
+      const ventas = [...allVentasCache]; // datos en vivo
       const base = await getBaseDocToday();
       if(!base) return alert("No hay base registrada hoy.");
 
@@ -932,16 +952,12 @@
       const w = window.open("", "_blank", "width=460,height=720"); w.document.write(html); w.document.close(); w.focus();
     };
 
-    /********** IMPRESIÓN (consulta directa a Firestore) **********/
+    /********** IMPRESIÓN **********/
     async function obtenerUltimaVenta(){
-      // Admin: última del negocio; Cajero: última suya
-      let qy = query(collection(db,'ventas'), where('businessId','==',BUSINESS_ID), orderBy('createdAt','desc'), limit(1));
-      if(!isAdmin()){
-        qy = query(collection(db,'ventas'), where('businessId','==',BUSINESS_ID), where('usuario','==',sessionUser.username), orderBy('createdAt','desc'), limit(1));
-      }
-      const snap = await getDocs(qy);
-      if(snap.empty) return null;
-      return { id: snap.docs[0].id, ...snap.docs[0].data() };
+      // Para admin: última del negocio; para cajero: última suya
+      let ventas = allVentasCache;
+      if (!isAdmin()) ventas = ventas.filter(v => (v.usuario||'') === (sessionUser?.username||''));
+      return ventas[0] || null; // ya están ordenadas desc por createdAt
     }
     window.imprimirUltimaCocinero = async () => {
       const v = await obtenerUltimaVenta();
@@ -1032,7 +1048,7 @@
     /********** RESUMEN **********/
     window.generarResumenProductos = async () => {
       if(!isAdmin()) return alert("Solo Admin.");
-      const ventas = await cargarVentasDesdeFirestore();
+      const ventas = [...allVentasCache];
       const resumen={};
       ventas.forEach(v=> (v.pedido||[]).forEach(p=> resumen[p.nombre]=(resumen[p.nombre]||0)+1 ));
       const ul=document.getElementById('listaResumen');
@@ -1044,8 +1060,14 @@
     window.addEventListener('load', async ()=>{
       await ensureDefaultUsers();
       showLoginModal();
-      await applyRoleUI(); // mientras no hay sesión, oculta admin, etc.
+      await applyRoleUI();
     });
+
+    // Helpers faltantes
+    async function autoPromptBaseIfMissing(){
+      const base = await getBaseDocToday();
+      if(!base){ abrirModalBaseCaja(); }
+    }
   </script>
 </body>
 </html>
