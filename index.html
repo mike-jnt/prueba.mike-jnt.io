@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SEÑOR AREPA — v6.1 (100% Firestore, realtime ventas)</title>
+  <title>SEÑOR AREPA — v6.2 (roles + cierre cajero)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
@@ -28,6 +28,7 @@
     <!-- MENÚ -->
     <h2 class="text-2xl font-bold text-gray-700 mb-4">Menú</h2>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Comida -->
       <div class="bg-white p-4 rounded-xl shadow-md">
         <h3 class="text-xl font-semibold text-yellow-600 mb-2">Comida</h3>
         <div class="grid grid-cols-2 gap-2">
@@ -48,6 +49,7 @@
         </div>
       </div>
 
+      <!-- Adiciones -->
       <div class="bg-white p-4 rounded-xl shadow-md">
         <h3 class="text-xl font-semibold text-yellow-600 mb-2">Adiciones</h3>
         <div class="grid grid-cols-2 gap-2">
@@ -65,6 +67,7 @@
         </div>
       </div>
 
+      <!-- Bebidas -->
       <div class="bg-white p-4 rounded-xl shadow-md">
         <h3 class="text-xl font-semibold text-yellow-600 mb-2">Bebidas</h3>
         <div class="grid grid-cols-2 gap-2">
@@ -141,14 +144,20 @@
 
     <!-- Acciones -->
     <div class="mt-6 flex flex-wrap gap-2">
-      <button onclick="guardarVenta()" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">💾 Guardar Venta</button>
-      <button onclick="imprimirUltimaCocinero()" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">🖨️ Imprimir Cocina</button>
-      <button onclick="imprimirUltimaCliente()" class="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded">🧾 Imprimir Recibo Cliente</button>
-      <button onclick="abrirModalBaseCaja()" class="bg-teal-600 hover:bg-teal-700 text-white p-2 rounded">📦 Base de Caja</button>
-      <button onclick="abrirModalGasto()" class="bg-rose-600 hover:bg-rose-700 text-white p-2 rounded">💸 Compras / Pagos</button>
-      <button onclick="exportarVentasExcelConEstilo()" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded">📊 Exportar Excel</button>
-      <button onclick="generarResumenProductos()" class="bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded">📊 Resumen Productos</button>
-      <button onclick="cierreDeCaja()" class="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded">💰 Cierre de Caja</button>
+      <!-- Cajero y Admin comparten -->
+      <button id="btnGuardarVenta" onclick="guardarVenta()" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded">💾 Guardar Venta</button>
+      <button id="btnImprimirCocina" onclick="imprimirUltimaCocinero()" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded">🖨️ Imprimir Cocina</button>
+      <button id="btnImprimirCliente" onclick="imprimirUltimaCliente()" class="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded">🧾 Imprimir Recibo Cliente</button>
+      <button id="btnBaseCaja" onclick="abrirModalBaseCaja()" class="bg-teal-600 hover:bg-teal-700 text-white p-2 rounded">📦 Base de Caja</button>
+
+      <!-- Solo ADMIN -->
+      <button id="btnGasto" onclick="abrirModalGasto()" class="bg-rose-600 hover:bg-rose-700 text-white p-2 rounded">💸 Compras / Pagos</button>
+      <button id="btnExportarExcel" onclick="exportarVentasExcelConEstilo()" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded">📊 Exportar Excel</button>
+      <button id="btnResumenProductos" onclick="generarResumenProductos()" class="bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded">📊 Resumen Productos</button>
+      <button id="btnCierreAdmin" onclick="cierreDeCaja()" class="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded">💰 Cierre de Caja</button>
+
+      <!-- Solo CAJERO -->
+      <button id="btnDeclararCierre" onclick="abrirModalDeclararCierre()" class="bg-amber-600 hover:bg-amber-700 text-white p-2 rounded hidden">🧮 Declarar cierre</button>
     </div>
 
     <!-- Ventas -->
@@ -218,7 +227,7 @@
     </div>
   </main>
 
-  <!-- MODALES (idénticos a versión anterior) -->
+  <!-- MODALES -->
   <!-- Vuelto -->
   <div id="modalVuelto" class="fixed inset-0 bg-black/50 hidden z-50 items-center justify-center">
     <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-5xl flex flex-col md:flex-row overflow-hidden">
@@ -326,6 +335,26 @@
     </div>
   </div>
 
+  <!-- Declarar cierre (CAJERO) -->
+  <div id="modalDeclararCierre" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg shadow-xl w-[90%] max-w-2xl overflow-hidden">
+      <div class="bg-amber-50 p-6 border-b border-gray-200">
+        <h2 class="text-2xl font-bold text-amber-700">🧮 Declarar cierre de caja</h2>
+        <p class="text-sm text-gray-600">Ingresa el efectivo contado en caja (COP) y una nota opcional.</p>
+      </div>
+      <div class="p-6 space-y-4">
+        <label class="block text-sm text-gray-700">Efectivo contado (COP)</label>
+        <input id="cierreContado" type="number" min="0" class="w-full border rounded px-3 py-2" placeholder="0" />
+        <label class="block text-sm text-gray-700">Nota (opcional)</label>
+        <textarea id="cierreNota" rows="3" class="w-full border rounded px-3 py-2" placeholder="Observaciones del cajero..."></textarea>
+        <div class="flex justify-end gap-2 pt-2">
+          <button onclick="confirmarDeclaracionCierre()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded shadow">Guardar declaración</button>
+          <button onclick="cerrarModalDeclararCierre()" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded shadow">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Login -->
   <div id="loginModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
     <div class="bg-white rounded-lg p-6 w-96">
@@ -369,7 +398,7 @@
     let ventaTemporal = null;
     let comandaEnEdicion = null;
 
-    // Ventas en memoria + subcripción realtime
+    // Ventas realtime
     let allVentasCache = [];
     let currentVentas = [];
     let unsubscribeVentas = null;
@@ -415,19 +444,25 @@
       const snap = await getDocs(query(collection(db,'users'), where('businessId','==',BUSINESS_ID)));
       return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     }
+
     async function syncUsersUI(){
-      if(!isAdmin()) return;
-      const users = await fetchAllUsers();
-      // Filtro de usuario en ventas
+      const admin = isAdmin();
+      // Filtro de usuario (solo admin)
       const sel = document.getElementById('filtroUsuario');
-      if (sel) {
+      const wrap = document.getElementById('filtroUsuarioWrap');
+      if (wrap) wrap.classList.toggle('hidden', !admin);
+      if (admin) {
+        const users = await fetchAllUsers();
         const current = sel.value || '__todos__';
         sel.innerHTML = `<option value="__todos__">Todos</option>` + users.map(u=>`<option value="${u.username}">${u.username}</option>`).join('');
         sel.value = current;
       }
-      // Tabla admin
+      // Tabla admin usuarios
       const tbody = document.getElementById('usuariosTbody');
-      if (tbody) {
+      const section = document.getElementById('adminUsuariosSection');
+      if (section) section.classList.toggle('hidden', !admin);
+      if (admin && tbody) {
+        const users = await fetchAllUsers();
         users.sort((a,b)=>a.username.localeCompare(b.username));
         tbody.innerHTML = users.map(u=>`
           <tr>
@@ -439,6 +474,7 @@
         `).join('');
       }
     }
+
     window.addUserFromForm = async (e) => {
       e.preventDefault();
       if(!isAdmin()) return alert("Solo Admin.");
@@ -448,14 +484,12 @@
       const fullname = document.getElementById('newFullname').value.trim();
       if(!username || !password) return alert("Usuario y contraseña requeridos.");
       await upsertUser({username, role, password, fullname});
-      document.getElementById('newUsername').value = "";
-      document.getElementById('newPassword').value = "";
-      document.getElementById('newRole').value = "cajero";
-      document.getElementById('newFullname').value = "";
+      e.target.reset();
       await syncUsersUI();
       alert("Usuario guardado.");
       return false;
     };
+
     window.loginFromModal = async (e) => {
       e.preventDefault();
       const u = document.getElementById('loginUser').value.trim();
@@ -469,17 +503,19 @@
       hideLoginModal();
       await applyRoleUI();
       await autoPromptBaseIfMissing();
-      subscribeVentasRealtime(); // <—— activar realtime justo al iniciar sesión
+      subscribeVentasRealtime();
       return false;
     };
 
-    /********** UI **********/
+    /********** UI (roles) **********/
     function toggleDisplay(id, show){
       const el = document.getElementById(id);
       if(!el) return;
       if(show) el.classList.remove('hidden'); else el.classList.add('hidden');
     }
+
     async function applyRoleUI(){
+      // header
       const badge = document.getElementById('currentUserBadge');
       const btnLogout = document.getElementById('btnLogout');
       if(sessionUser){
@@ -490,15 +526,28 @@
         badge.classList.add('hidden');
         btnLogout.classList.add('hidden');
       }
+
       const admin = isAdmin();
-      toggleDisplay('adminUsuariosSection', admin);
-      const wrap = document.getElementById('filtroUsuarioWrap');
-      if (wrap) wrap.classList.toggle('hidden', !admin);
+
+      // botones visibles por rol
+      toggleDisplay('btnGuardarVenta', true);
+      toggleDisplay('btnImprimirCocina', true);
+      toggleDisplay('btnImprimirCliente', true);
+      toggleDisplay('btnBaseCaja', true);
+
+      toggleDisplay('btnGasto', admin);
+      toggleDisplay('btnExportarExcel', admin);
+      toggleDisplay('btnResumenProductos', admin);
+      toggleDisplay('btnCierreAdmin', admin);
+
+      toggleDisplay('btnDeclararCierre', !admin);
+
+      // sección admin usuarios y filtros
       await syncUsersUI();
       await updateBaseBadge();
     }
 
-    /********** COMANDA (contador atómico) **********/
+    /********** COMANDA **********/
     async function getNextComanda(){
       const ref = doc(db,'counters', BUSINESS_ID);
       let newValue = 0;
@@ -611,7 +660,6 @@
         box.appendChild(card);
       });
       document.getElementById('totalDevueltoLabel').textContent = fmtMoney(0);
-      (document.getElementById('modalVuelto')).dataset.temp="1";
     };
     window.cerrarModalVuelto = () => {
       const m = document.getElementById('modalVuelto'); m.classList.add('hidden'); m.classList.remove('flex'); ventaTemporal=null;
@@ -632,7 +680,6 @@
       cerrarModalVuelto();
       alert("Venta guardada.");
       limpiarPedido();
-      // no hace falta llamar mostrarVentas(); el listener realtime actualizará la tabla
       document.getElementById("resumenProductos").classList.add("hidden");
     };
 
@@ -701,7 +748,7 @@
       DENOMS.forEach(d=> efCounts[d]=0);
     };
 
-    /********** VENTAS (CRUD + REALTIME) **********/
+    /********** VENTAS **********/
     async function guardarVentaEnFirestore(venta){
       await addDoc(collection(db,'ventas'), { ...venta, createdAt: serverTimestamp() });
       await addDoc(collection(db,'users', venta.usuario, 'ventas'), { ...venta, createdAt: serverTimestamp() });
@@ -751,11 +798,10 @@
       comandaEnEdicion=null;
       alert("Venta guardada.");
       limpiarPedido();
-      // La tabla se actualiza sola por onSnapshot
       document.getElementById("resumenProductos").classList.add("hidden");
     };
 
-    // Suscripción realtime a ventas (filtrada por rol)
+    // Realtime ventas
     function subscribeVentasRealtime(){
       if (unsubscribeVentas) { unsubscribeVentas(); unsubscribeVentas=null; }
       let qy = query(collection(db,'ventas'), where('businessId','==',BUSINESS_ID), orderBy('createdAt','desc'));
@@ -769,12 +815,9 @@
       unsubscribeVentas = onSnapshot(qy, (snap)=>{
         allVentasCache = snap.docs.map(d=> ({ id:d.id, ...d.data() }));
         renderVentasFromCache();
-      }, (err)=> {
-        console.warn('onSnapshot ventas error:', err);
       });
     }
 
-    // Render con filtros sin re-consultar
     function renderVentasFromCache(){
       const cont = document.getElementById('ventasGuardadas'); if(!cont) return;
       cont.innerHTML='';
@@ -819,7 +862,6 @@
       if(!isAdmin()) return alert("Solo Admin.");
       const v = currentVentas[i]; if(!v?.id) return;
       await deleteDoc(doc(db,'ventas', v.id));
-      // onSnapshot actualizará la UI automáticamente
     };
 
     window.editarVenta = (i) => {
@@ -834,7 +876,7 @@
       alert("Venta cargada para edición. Guarda para crear reemplazo con misma comanda.");
     };
 
-    /********** EXPORTAR EXCEL (Ventas + Gastos) **********/
+    /********** EXPORTAR / RESUMEN **********/
     async function cargarGastosHoy(){
       const snap = await getDocs(query(collection(db,'gastos'), where('businessId','==',BUSINESS_ID), orderBy('createdAt','desc')));
       const hoy = todayStr();
@@ -843,12 +885,9 @@
     window.exportarVentasExcelConEstilo = async () => {
       if(!isAdmin()) return alert("Solo Admin.");
       let ventas = [...allVentasCache];
-      // aplica filtro usuario (admin)
-      if (isAdmin()) {
-        const sel = document.getElementById('filtroUsuario');
-        if (sel && sel.value && sel.value !== '__todos__') {
-          ventas = ventas.filter(x => (x.usuario||'').toLowerCase() === sel.value.toLowerCase());
-        }
+      const sel = document.getElementById('filtroUsuario');
+      if (sel && sel.value && sel.value !== '__todos__') {
+        ventas = ventas.filter(x => (x.usuario||'').toLowerCase() === sel.value.toLowerCase());
       }
       if(ventas.length===0) return alert("No hay ventas.");
       const gastos = await cargarGastosHoy();
@@ -886,11 +925,63 @@
              `Ventas_y_Gastos_${todayStr()}.xlsx`);
     };
 
-    /********** CIERRE DE CAJA **********/
+    window.generarResumenProductos = async () => {
+      if(!isAdmin()) return alert("Solo Admin.");
+      const ventas = [...allVentasCache];
+      const resumen={};
+      ventas.forEach(v=> (v.pedido||[]).forEach(p=> resumen[p.nombre]=(resumen[p.nombre]||0)+1 ));
+      const ul=document.getElementById('listaResumen');
+      ul.innerHTML = Object.entries(resumen).map(([n,c])=> `<li>${n}: ${c}</li>`).join('');
+      document.getElementById('resumenProductos').classList.remove('hidden');
+    };
+
+    /********** CIERRES **********/
+    // Cajero declara cierre (efectivo contado + nota)
+    window.abrirModalDeclararCierre = () => {
+      const m = document.getElementById('modalDeclararCierre');
+      (document.getElementById('cierreContado').value = '');
+      (document.getElementById('cierreNota').value = '');
+      m.classList.remove('hidden'); m.classList.add('flex');
+    };
+    window.cerrarModalDeclararCierre = () => {
+      const m = document.getElementById('modalDeclararCierre');
+      m.classList.add('hidden'); m.classList.remove('flex');
+    };
+    async function guardarDeclaracionCierre(payload){
+      const id = `${BUSINESS_ID}_${todayStr()}`;
+      await setDoc(doc(db,'cierres',id), { ...payload, createdAt: serverTimestamp() }, { merge:true });
+    }
+    window.confirmarDeclaracionCierre = async () => {
+      if(!sessionUser) return showLoginModal();
+      if(isAdmin()) return alert('La declaración de cierre la realiza el cajero.');
+      const contado = parseInt(document.getElementById('cierreContado').value||'0',10)||0;
+      const nota = document.getElementById('cierreNota').value.trim();
+      const payload = {
+        businessId: BUSINESS_ID,
+        fecha: todayStr(),
+        contado,
+        nota,
+        usuario: sessionUser.username,
+        hora: new Date().toLocaleString(),
+        tipo: 'declaracion-cierre'
+      };
+      await guardarDeclaracionCierre(payload);
+      cerrarModalDeclararCierre();
+      alert('Declaración de cierre guardada.');
+    };
+
+    // Admin imprime cierre con comparación vs declaración del cajero
+    async function getDeclaracionCierreHoy(){
+      const id = `${BUSINESS_ID}_${todayStr()}`;
+      const ds = await getDoc(doc(db,'cierres',id));
+      return ds.exists()? ds.data() : null;
+    }
+
     window.cierreDeCaja = async () => {
-      const ventas = [...allVentasCache]; // datos en vivo
+      const ventas = [...allVentasCache];
       const base = await getBaseDocToday();
       if(!base) return alert("No hay base registrada hoy.");
+      const declaracion = await getDeclaracionCierreHoy();
 
       const sumRec={}, sumDev={}, sumNet={}, finalCounts={};
       let montoRec=0, montoDev=0, montoNet=0, montoBase=0, montoFinal=0;
@@ -912,6 +1003,8 @@
         montoFinal+= finalCounts[d]*parseInt(d,10);
       });
 
+      const diff = declaracion ? (declaracion.contado - montoFinal) : null;
+
       const html = `
       <html><head><title>Cierre de Caja</title><style>
         body{font-family:monospace;font-size:12px;width:76mm;padding:10px 12px;margin:0;}
@@ -919,6 +1012,7 @@
         .line{border-top:1px dashed #000;margin:8px 0;} table{width:100%;border-collapse:collapse;}
         th,td{padding:4px 2px;text-align:right;} th:first-child,td:first-child{text-align:left;}
         .totales p{margin:3px 0;font-weight:bold;} .foot{text-align:center;margin-top:10px;}
+        .box{background:#fff8e1;border:1px dashed #c48a00;padding:8px;border-radius:6px}
       </style></head><body>
         <h2>CIERRE DE CAJA</h2>
         <p>Fecha: ${new Date().toLocaleString()}</p>
@@ -943,8 +1037,20 @@
           <p>Recibido Ventas: ${fmtMoney(montoRec)}</p>
           <p>Devuelto: ${fmtMoney(montoDev)}</p>
           <p>Neto por Ventas: ${fmtMoney(montoNet)}</p>
-          <p>Total Esperado en Caja: ${fmtMoney(montoFinal)}</p>
+          <p><strong>Total Esperado en Caja:</strong> ${fmtMoney(montoFinal)}</p>
         </div>
+        ${declaracion ? `
+          <div class="line"></div>
+          <div class="box">
+            <p><strong>Declaración Cajero:</strong> ${declaracion.usuario} — ${declaracion.hora}</p>
+            <p>Efectivo contado: <strong>${fmtMoney(declaracion.contado||0)}</strong></p>
+            ${declaracion.nota ? `<p>Nota: ${declaracion.nota}</p>` : ''}
+            <p>Diferencia (Contado - Esperado): <strong>${fmtMoney(diff)}</strong></p>
+          </div>
+        ` : `
+          <div class="line"></div>
+          <p><em>No hay declaración de cajero registrada hoy.</em></p>
+        `}
         <div class="line"></div>
         <p class="foot">Gracias. — Señor Arepa</p>
         <script>window.print();<\/script>
@@ -954,10 +1060,9 @@
 
     /********** IMPRESIÓN **********/
     async function obtenerUltimaVenta(){
-      // Para admin: última del negocio; para cajero: última suya
       let ventas = allVentasCache;
       if (!isAdmin()) ventas = ventas.filter(v => (v.usuario||'') === (sessionUser?.username||''));
-      return ventas[0] || null; // ya están ordenadas desc por createdAt
+      return ventas[0] || null;
     }
     window.imprimirUltimaCocinero = async () => {
       const v = await obtenerUltimaVenta();
@@ -1045,17 +1150,6 @@
       const w=window.open("","_blank","width=400,height=600"); w.document.write(contenido); w.document.close(); w.focus();
     };
 
-    /********** RESUMEN **********/
-    window.generarResumenProductos = async () => {
-      if(!isAdmin()) return alert("Solo Admin.");
-      const ventas = [...allVentasCache];
-      const resumen={};
-      ventas.forEach(v=> (v.pedido||[]).forEach(p=> resumen[p.nombre]=(resumen[p.nombre]||0)+1 ));
-      const ul=document.getElementById('listaResumen');
-      ul.innerHTML = Object.entries(resumen).map(([n,c])=> `<li>${n}: ${c}</li>`).join('');
-      document.getElementById('resumenProductos').classList.remove('hidden');
-    };
-
     /********** INIT **********/
     window.addEventListener('load', async ()=>{
       await ensureDefaultUsers();
@@ -1063,7 +1157,6 @@
       await applyRoleUI();
     });
 
-    // Helpers faltantes
     async function autoPromptBaseIfMissing(){
       const base = await getBaseDocToday();
       if(!base){ abrirModalBaseCaja(); }
