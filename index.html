@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SEÑOR AREPA — v6.2 (roles + cierre cajero)</title>
+  <title>SEÑOR AREPA — v6.3 (roles + cierre + cache local)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
@@ -391,6 +391,31 @@
     const app = initializeApp(firebaseConfig);
     const db = initializeFirestore(app, { localCache: memoryLocalCache() }); // sin persistencia
 
+    // --- CACHE LOCAL (localStorage) ---
+    const LOCAL_KEYS = {
+      ventas: `sr_${BUSINESS_ID}_ventas_cache`
+    };
+
+    function saveLocalArray(key, arr) {
+      try {
+        localStorage.setItem(key, JSON.stringify(arr || []));
+      } catch (e) {
+        console.warn('No se pudo guardar en localStorage', e);
+      }
+    }
+
+    function loadLocalArray(key) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        console.warn('No se pudo leer de localStorage', e);
+        return [];
+      }
+    }
+
     /********** ESTADO UI **********/
     const DENOMS = ["100000","50000","20000","10000","5000","2000","1000","500","200","100","50","20"];
     let pedido = [];
@@ -499,11 +524,29 @@
       const data = ds.data();
       if (data.businessId !== BUSINESS_ID) return alert("Usuario no pertenece a este negocio.");
       if ((data.password||'') !== p) return alert("Contraseña incorrecta.");
+
+      // set sesión
       sessionUser = { username: data.username, role: data.role, fullname: data.fullname||'' };
       hideLoginModal();
       await applyRoleUI();
       await autoPromptBaseIfMissing();
+
+      // 1) Cargar ventas desde cache local para mostrar algo inmediato
+      const cached = loadLocalArray(LOCAL_KEYS.ventas);
+      if (cached.length) {
+        if (isAdmin()) {
+          // Admin ve todo lo que haya cacheado
+          allVentasCache = cached;
+        } else {
+          // Cajero solo ve sus ventas en el cache
+          allVentasCache = cached.filter(v => (v.usuario || '') === sessionUser.username);
+        }
+        renderVentasFromCache();
+      }
+
+      // 2) Activar realtime con Firestore (sobreescribirá cache si hay cambios)
       subscribeVentasRealtime();
+
       return false;
     };
 
@@ -801,20 +844,39 @@
       document.getElementById("resumenProductos").classList.add("hidden");
     };
 
-    // Realtime ventas
+    // Realtime ventas con cache local
     function subscribeVentasRealtime(){
       if (unsubscribeVentas) { unsubscribeVentas(); unsubscribeVentas=null; }
-      let qy = query(collection(db,'ventas'), where('businessId','==',BUSINESS_ID), orderBy('createdAt','desc'));
+
+      let qy = query(
+        collection(db,'ventas'),
+        where('businessId','==',BUSINESS_ID),
+        orderBy('createdAt','desc')
+      );
+
       if(!isAdmin()){
-        qy = query(collection(db,'ventas'),
+        qy = query(
+          collection(db,'ventas'),
           where('businessId','==',BUSINESS_ID),
           where('usuario','==',sessionUser.username),
           orderBy('createdAt','desc')
         );
       }
+
       unsubscribeVentas = onSnapshot(qy, (snap)=>{
-        allVentasCache = snap.docs.map(d=> ({ id:d.id, ...d.data() }));
+        // Datos frescos desde Firestore
+        const ventas = snap.docs.map(d=> ({ id:d.id, ...d.data() }));
+
+        allVentasCache = ventas;
         renderVentasFromCache();
+
+        // Guardar snapshot en cache local
+        if (isAdmin()) {
+          saveLocalArray(LOCAL_KEYS.ventas, ventas);
+        } else {
+          const soloMias = ventas.filter(v => (v.usuario || '') === sessionUser.username);
+          saveLocalArray(LOCAL_KEYS.ventas, soloMias);
+        }
       });
     }
 
